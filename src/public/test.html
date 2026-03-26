@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Fitness Trainer - Database Test</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    
+    .test-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+      transition: all 0.3s;
+    }
+    
+    button:hover {
+      background: #764ba2;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-weight: 500;
+    }
+    
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+    
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+    
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border-left: 4px solid #17a2b8;
+    }
+    
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #667eea;
+    }
+    
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #667eea;
+    }
+    
+    .stat-label {
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏋️ Smart Fitness Trainer</h1>
+    <p class="subtitle">Database Connection Test Page</p>
+    
+    <div class="test-section">
+      <h2>Test Database Connection</h2>
+      <button onclick="testConnection()">🔌 Test Connection</button>
+      <div id="connectionResult"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>Create Sample User</h2>
+      <button onclick="createSampleUser()">➕ Create Test User</button>
+      <div id="userResult"></div>
+    </div>
+    
+    <div class="test-section">
+      <h2>View All Users</h2>
+      <button onclick="getAllUsers()">👥 Get All Users</button>
+      <div id="usersResult"></div>
+    </div>
+    
+    <div class="info">
+      <strong>ℹ️ Next Steps:</strong><br>
+      1. Make sure your MongoDB Atlas is set up<br>
+      2. Test the connection above<br>
+      3. Create sample data<br>
+      4. Start building AR and pose detection features!
+    </div>
+  </div>
+
+  <script>
+    async function testConnection() {
+      const resultDiv = document.getElementById('connectionResult');
+      resultDiv.innerHTML = '<div class="info">Testing connection...</div>';
+      
+      try {
+        const response = await fetch('/api/test');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          resultDiv.innerHTML = `
+            <div class="success">✅ ${data.message}</div>
+            <div class="stats">
+              <div class="stat-card">
+                <div class="stat-number">${data.data.users}</div>
+                <div class="stat-label">Users</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number">${data.data.machines}</div>
+                <div class="stat-label">Machines</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number">${data.data.sessions}</div>
+                <div class="stat-label">Sessions</div>
+              </div>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    }
+    
+    async function createSampleUser() {
+      const resultDiv = document.getElementById('userResult');
+      resultDiv.innerHTML = '<div class="info">Creating user...</div>';
+      
+      const sampleUser = {
+        userId: 'U' + Date.now(),
+        name: 'Eugene Mogare',
+        email: 'eugene' + Date.now() + '@embu.ac.ke',
+        fitnessLevel: 'Intermediate',
+        age: 22
+      };
+      
+      try {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sampleUser)
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          resultDiv.innerHTML = `
+            <div class="success">✅ User created successfully!</div>
+            <pre>${JSON.stringify(data.data, null, 2)}</pre>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    }
+    
+    async function getAllUsers() {
+      const resultDiv = document.getElementById('usersResult');
+      resultDiv.innerHTML = '<div class="info">Fetching users...</div>';
+      
+      try {
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+          if (data.data.length === 0) {
+            resultDiv.innerHTML = '<div class="info">ℹ️ No users found. Create some test users first!</div>';
+          } else {
+            resultDiv.innerHTML = `
+              <div class="success">✅ Found ${data.data.length} user(s)</div>
+              <pre>${JSON.stringify(data.data, null, 2)}</pre>
+            `;
+          }
+        } else {
+          resultDiv.innerHTML = `<div class="error">❌ ${data.message}</div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Printable Machine QR Codes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: #fff;
+            color: #000;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 40px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            border-radius: 12px;
+            page-break-inside: avoid;
+        }
+        .card img {
+            width: 200px;
+            height: 200px;
+        }
+        .card h2 {
+            margin: 15px 0 5px 0;
+            font-size: 1.5rem;
+        }
+        .card p {
+            margin: 0;
+            color: #555;
+            font-size: 1rem;
+        }
+        @media print {
+            body { padding: 0; }
+            .grid { max-width: 100%; gap: 20px; }
+            h1 { display: none; }
+            .card { border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Gym Machine QR Codes</h1>
+    <p style="margin-bottom: 30px;">Print this page and attach the codes to the respective machines.</p>
+    <div class="grid">
+
+        <div class="card">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKySURBVO3BQW7kQAwEwSxC//9yro88NSBIM7C5jIg/WGMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoxRrl4qEkfJNKl4Q7VO5IwjepPFGsUYo1SrFGuXiZypuScIfKJ6m8KQlvKtYoxRqlWKNcfFgS7lB5IgmdSpeEE5U7knCHyicVa5RijVKsUS7+OJWTJPxPijVKsUYp1igXf1wSOpUTlS4JkxRrlGKNUqxRLj5M5ZNUuiScJOFNKr9JsUYp1ijFGuXiZUn4piR0Kl0SOpUuCXck4Tcr1ijFGqVYo8QfDJaEO1T+smKNUqxRijXKxUNJ6FROkvBJKicqXRK6JHQqJ0noVLok3KHyRLFGKdYoxRrl4iGVLgmdSqfyRBI6lS4JncoTSThR6ZJwotIl4U3FGqVYoxRrlPiDB5Jwh8odSehUuiR0Kl0SOpU7ktCpdEm4Q+WTijVKsUYp1igXD6l0SThJwh0qT6h0SehUuiScJOFEpUvCSRI6lSeKNUqxRinWKBdfptIloVPpktCp3JGETuVEpUtCp9Il4QmVNxVrlGKNUqxRLl6mcofKicodSbgjCZ+k8k3FGqVYoxRrlIuHkvBNKicqT6icJOGJJJyoPFGsUYo1SrFGuXiZypuS8EQSOpU7ktCpdEnoktCpnKi8qVijFGuUYo1y8WFJuEPlk5LwRBI6lZMkdCpdEjqVJ4o1SrFGKdYoF8MkoVM5ScKJykkSnlB5U7FGKdYoxRrl4o9TOUnCHUk4UXkiCScqTxRrlGKNUqxRLj5M5ZuScKLSJaFT+SaVNxVrlGKNUqxRLl6WhG9KwonKHUnoVE5UTpLwTcUapVijFGuU+IM1RrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUf4Bo64D/oeow7sAAAAASUVORK5CYII=" alt="Treadmill QR Code">
+            <h2>Treadmill</h2>
+            <p>Scan to start workout</p>
+        </div>
+
+        <div class="card">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAK6SURBVO3BQW7kQAwEwSxC//9yro88NSBIM2sTjIg/WGMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoxRrl4qEkfJNKl4ROpUtCp9IloVPpkvBNKk8Ua5RijVKsUS5epvKmJNyRhE6lS8ITKm9KwpuKNUqxRinWKBcfloQ7VO5QOUlCp/KmJNyh8knFGqVYoxRrlIs/LgmdykkSOpVJijVKsUYp1igXf5zKHSqTFWuUYo1SrFEuPkzlf1L5JJXfpFijFGuUYo1y8bIkfFMSOpUuCZ1Kl4RO5SQJv1mxRinWKMUaJf7gD0vCHSqTFWuUYo1SrFEuHkpCp9Il4USlS8IdKidJeCIJncpJEjqVLgknKk8Ua5RijVKsUeIPvigJd6h8UhJOVE6ScIfKJxVrlGKNUqxRLh5Kwh0qdyShU+mScIfKiUqXhCdUvqlYoxRrlGKNcvEylS4JXRJOVDqVLgknKr9ZEk5UnijWKMUapVijXHyYykkSTpLQqZwk4Q6VLgmdyh1J6JLwTcUapVijFGuU+IM/LAknKl0SOpWTJHQqXRKeUHlTsUYp1ijFGuXioSR8k8oTKneo3KHSJeEkCZ3KE8UapVijFGuUi5epvCkJd6h0SehUuiR0KidJ6FS6JHQqXRI+qVijFGuUYo1y8WFJuEPlDpUuCZ1Kl4RO5SQJncqJyolKl4Q3FWuUYo1SrFEu/rgkdConKl0STlROktCpnCShU3lTsUYp1ijFGuViuCR0Kicqd6icJKFT+aRijVKsUYo1ysWHqXySSpeETqVLQqfSJaFTOUlCp9KpfFOxRinWKMUa5eJlSfimJJwkoVN5Igmdyh1J6FTeVKxRijVKsUaJP1hjFGuUYo1SrFGKNUqxRinWKMUapVijFGuUYo1SrFGKNUqxRinWKMUa5R9QXBnlhDAasQAAAABJRU5ErkJggg==" alt="Leg Press Machine QR Code">
+            <h2>Leg Press Machine</h2>
+            <p>Scan to start workout</p>
+        </div>
+
+        <div class="card">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKNSURBVO3BQW7sWAwEwUxC979yjZecjYAHqdvfBCPMD9YYxRqlWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGuXhI5ZuS0Kl0SehUTiShU/mmJDxRrFGKNUqxRrl4WRLepHInCZ1Kl4Q3JeFNKm8q1ijFGqVYo1x8mMqJJHyTSpeEEyonkvBJxRqlWKMUa5SLP07lhMpkxRqlWKMUa5RijVKsUYo1SrFGufiwJPwmlS4JncoTSfiXFGuUYo1SrFEuXqbym5LQqbxJ5V9WrFGKNUqxRrl4KAl/WRLuJOEvKdYoxRqlWKNcPKTSJeGESpeETuWJJNxR+aQk3FHpkvBEsUYp1ijFGuXioSScUDmRhE6lS0KncicJd5LQqTyh8k3FGqVYoxRrlIuHVD5JpUtCp9Il4U1JOKHSJeGOypuKNUqxRinWKBcPJaFTuZOETuVOEk6oPKFyJwmdSpeE31SsUYo1SrFGMT94QOWbkvCESpeEOyp3ktCp3EnCJxVrlGKNUqxRzA/+MJUuCSdUTiShU+mS8JuKNUqxRinWKBcPqXxTEu6onEhCp9IloVO5o3InCZ1Kl4QnijVKsUYp1igXL0vCm1TuJOGOyokkPJGETqVT+aRijVKsUYo1ysWHqZxIwgmVE0noVE4k4Y7KbyrWKMUapVijXPxxSehUuiR0Kl0SOpUnktCpfFOxRinWKMUa5WL9TxJOqNxJwjcVa5RijVKsUS4+LAnflIRO5YTKiSQ8odIl4YlijVKsUYo1ysXLVL5J5UQSOpUnVLokdCrfVKxRijVKsUYxP1hjFGuUYo1SrFGKNUqxRinWKMUapVijFGuUYo1SrFGKNUqxRinWKMUa5T8Zht0C/1ct/wAAAABJRU5ErkJggg==" alt="Chest Press Machine QR Code">
+            <h2>Chest Press Machine</h2>
+            <p>Scan to start workout</p>
+        </div>
+
+        <div class="card">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKVSURBVO3BQW7sWAwEwSxC979yjpdcPUCQuv3NYUT8wRqjWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoFw8l4ZtUuiScqHRJ6FROkvBNKk8Ua5RijVKsUS5epvKmJJyodEnoktCpdEnoVE5U3pSENxVrlGKNUqxRLj4sCXeovEnlk5Jwh8onFWuUYo1SrFEu/rgknCShU5msWKMUa5RijXIxnEqXhMmKNUqxRinWKBcfpvJNKicqXRKeUPmXFGuUYo1SrFEuXpaEf0kSOpUnkvAvK9YoxRqlWKNcPKTyl6mcqPwlxRqlWKMUa5SLh5LQqdyRhE6lS8InJeGTVE6S0Kk8UaxRijVKsUa5eEilS8ITSehUuiR0Kl0SOpU7VLokPJGEbyrWKMUapVijXLxM5SQJncpJEn6Tyh1J6FROkvCmYo1SrFGKNUr8wS9KQqdyRxK+SaVLQqdyRxI6lSeKNUqxRinWKPEHH5SEE5UuCXeodEnoVLokdConSThR6ZJwovJJxRqlWKMUa5T4gz8sCScqJ0m4Q6VLQqfym4o1SrFGKdYoFw8l4ZtUTlROktCpdEnoVLoknCThRKVLQqfyRLFGKdYoxRrl4mUqb0rCicqbVJ5Q6ZLQJeGTijVKsUYp1igXH5aEO1TuSEKncqLSJeEOlZMk/KZijVKsUYo1ysUfp9IloVP5JpUuCd9UrFGKNUqxRrn4n1N5IgknKt9UrFGKNUqxRrn4MJXflIQTlS4Jd6g8kYRO5YlijVKsUYo1ysXLkvBNSbhDpUvCE0noVLokfFOxRinWKMUaJf5gjVGsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5T/AHxI7+syK9XjAAAAAElFTkSuQmCC" alt="Lat Pulldown QR Code">
+            <h2>Lat Pulldown</h2>
+            <p>Scan to start workout</p>
+        </div>
+
+        <div class="card">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHQAAAB0CAYAAABUmhYnAAAAAklEQVR4AewaftIAAAKfSURBVO3BQartWg4FwVzC859y1m2qtcHYPvW+UET8wxqjWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFGKdYoFw8l4ZdUuiQ8oXKShF9SeaJYoxRrlGKNcvEylTcl4USlS8KJyhMqb0rCm4o1SrFGKdYoFx9Lwh0qdyThjiScqNyRhDtUvlSsUYo1SrFGufiPU+mS0KmcJGGSYo1SrFGKNUqxRinWKMUapVijXHxM5UtJeELlCZV/SbFGKdYoxRrl4mVJ+H9S6ZLQqXRJ6FROkvAvK9YoxRqlWKPEPwyShDtUJinWKMUapVijXDyUhE6lS0KnckcSTlROVLokdEnoVE6S0KmcJKFT6ZLQqTxRrFGKNUqxRrl4WRLuSEKn0qk8kYRO5SQJncpJEk5UTlTeVKxRijVKsUa5+JhKl4RO5SQJncodKk8koVM5SUKXhBOVNxVrlGKNUqxRLl6m8iaVkyR0Kl0SOpUuCXckoVM5UTlJQqfyRLFGKdYoxRol/uFDSehUuiTcodIloVN5UxI6lS4JnUqXhE7lS8UapVijFGuUi4+pnKj8y1TelIQTlSeKNUqxRinWKBcPJeGXVE6S8IRKl4Q7ktCpdEnoVN5UrFGKNUqxRol/eCAJncqbktCpnCShU/mlJDyh8kSxRinWKMUa5eJjSbhD5UtJ+JJKl4RfKtYoxRqlWKNcDKPSJeFE5Usqv1SsUYo1SrFGufiPS0Kn0qmcJOEOlS4Jb1J5olijFGuUYo1y8TGVL6k8odIl4U0qJ0l4U7FGKdYoxRrl4mVJ+KUkdCpdEr6k0iWhS8IvFWuUYo1SrFHiH9YYxRqlWKMUa5RijVKsUYo1SrFGKdYoxRqlWKMUa5RijVKsUYo1SrFG+R/soQHpnKyupwAAAABJRU5ErkJggg==" alt="Stationary Bike QR Code">
+            <h2>Stationary Bike</h2>
+            <p>Scan to start workout</p>
+        </div>
+
+    </div>
+    <script>
+        // Auto-trigger print dialog when opened
+        window.onload = () => { window.print(); }
+    </script>
+</body>
+</html>

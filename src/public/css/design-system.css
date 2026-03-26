@@ -1,0 +1,83 @@
+/* Base reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Color Palette */
+  --color-primary: #1a1a2e;         /* Deep navy - primary background */
+  --color-surface: #16213e;         /* Slightly lighter navy - card surfaces */
+  --color-elevated: #0f3460;        /* Elevated elements - active states */
+  --color-accent: #e94560;          /* Red accent - CTAs and highlights */
+  --color-accent-secondary: #533483; /* Purple - secondary actions */
+  --color-text-primary: #eaeaea;    /* Primary text on dark bg */
+  --color-text-secondary: #a0a0b0;  /* Secondary/muted text */
+  --color-text-inverse: #1a1a2e;    /* Text on light backgrounds */
+  --color-success: #2d6a4f;         /* Success states */
+  --color-success-light: #d8f3dc;   /* Success backgrounds */
+  --color-warning: #b5560a;         /* Warning states */
+  --color-warning-light: #ffe8d6;   /* Warning backgrounds */
+  --color-border: rgba(255,255,255,0.08); /* Subtle borders */
+  --color-overlay: rgba(0,0,0,0.6); /* Modal overlays */
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Border Radius */
+  --radius-sm: 4px;    /* Buttons, tags, small elements */
+  --radius-md: 8px;    /* Cards, inputs, panels */
+  --radius-lg: 16px;   /* Modals, large containers */
+
+  /* Typography Scale */
+  --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --text-xs: 11px;     /* Labels, tags */
+  --text-sm: 13px;     /* Secondary text, captions */
+  --text-base: 15px;   /* Body text */
+  --text-md: 17px;     /* Subheadings */
+  --text-lg: 21px;     /* Section headings */
+  --text-xl: 27px;     /* Page headings */
+  --text-2xl: 34px;    /* Hero headings */
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Animation System */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 350ms;
+  --duration-enter: 250ms;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utility classes */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-accent { color: var(--color-accent); }

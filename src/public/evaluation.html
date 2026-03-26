@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usability Evaluation - Smart Fitness Trainer</title>
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) window.location.href = '/login.html';
+        })();
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+    <style>
+        body {
+            background: var(--color-primary);
+            color: var(--color-text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #02C39A, #028090);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-home {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .question-group {
+            margin-bottom: 2rem;
+        }
+
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: block;
+            color: var(--color-text-primary);
+        }
+
+        .likert-scale {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .likert-option {
+            flex: 1;
+            text-align: center;
+        }
+
+        .likert-option input {
+            display: none;
+        }
+
+        .likert-option label {
+            display: block;
+            padding: 10px;
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .likert-option input:checked + label {
+            background: var(--color-accent);
+            color: white;
+            border-color: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(2, 195, 154, 0.3);
+        }
+
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .textarea-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        textarea {
+            width: 100%;
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #02C39A, #028090);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: opacity 0.2s;
+        }
+
+        .submit-btn:hover { opacity: 0.9; }
+
+        .success-overlay {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .success-overlay h2 { color: #02C39A; }
+    </style>
+</head>
+<body>
+    <a href="/" class="nav-home">Home</a>
+    <div class="container">
+        <div class="header">
+            <h1>Usability Evaluation</h1>
+            <p>Your feedback helps us improve the Smart Fitness Trainer experience.</p>
+        </div>
+
+        <div class="card" id="formCard">
+            <form id="evalForm">
+                <!-- Ease of Use -->
+                <div class="question-group">
+                    <span class="question-text">1. The system interface was intuitive and easy to navigate.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="easeOfUse" value="1" id="e1" required><label for="e1">1</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUse" value="2" id="e2"><label for="e2">2</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUse" value="3" id="e3"><label for="e3">3</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUse" value="4" id="e4"><label for="e4">4</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUse" value="5" id="e5"><label for="e5">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Pose Accuracy -->
+                <div class="question-group">
+                    <span class="question-text">2. The AI pose detection accurately captured my movements during exercise.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="1" id="p1" required><label for="p1">1</label></div>
+                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="2" id="p2"><label for="p2">2</label></div>
+                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="3" id="p3"><label for="p3">3</label></div>
+                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="4" id="p4"><label for="p4">4</label></div>
+                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="5" id="p5"><label for="p5">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Visual Quality -->
+                <div class="question-group">
+                    <span class="question-text">3. The 3D AR workout demonstrations were clear and helpful.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="visualQuality" value="1" id="v1" required><label for="v1">1</label></div>
+                        <div class="likert-option"><input type="radio" name="visualQuality" value="2" id="v2"><label for="v2">2</label></div>
+                        <div class="likert-option"><input type="radio" name="visualQuality" value="3" id="v3"><label for="v3">3</label></div>
+                        <div class="likert-option"><input type="radio" name="visualQuality" value="4" id="v4"><label for="v4">4</label></div>
+                        <div class="likert-option"><input type="radio" name="visualQuality" value="5" id="v5"><label for="v5">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Dashboard Utility -->
+                <div class="question-group">
+                    <span class="question-text">4. The analytics dashboard provides actionable insights into my progress.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="1" id="d1" required><label for="d1">1</label></div>
+                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="2" id="d2"><label for="d2">2</label></div>
+                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="3" id="d3"><label for="d3">3</label></div>
+                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="4" id="d4"><label for="d4">4</label></div>
+                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="5" id="d5"><label for="d5">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Overall Satisfaction -->
+                <div class="question-group">
+                    <span class="question-text">5. Overall, I am satisfied with the Smart Fitness Trainer app.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="1" id="s1" required><label for="s1">1</label></div>
+                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="2" id="s2"><label for="s2">2</label></div>
+                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="3" id="s3"><label for="s3">3</label></div>
+                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="4" id="s4"><label for="s4">4</label></div>
+                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="5" id="s5"><label for="s5">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <div class="textarea-group">
+                    <label>Suggestions for Improvement</label>
+                    <textarea id="comments" placeholder="What can we do better?"></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Submit Feedback</button>
+            </form>
+        </div>
+
+        <div class="card success-overlay" id="successCard">
+            <h2>🎉 Thank You!</h2>
+            <p>Your response has been recorded successfully.</p>
+            <button class="submit-btn" onclick="window.location.href='/scanner.html'">Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('evalForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const sessionUser = JSON.parse(localStorage.getItem('user'));
+            const payload = {
+                userId: sessionUser ? sessionUser.userId : 'U001',
+                responses: {
+                    easeOfUse: parseInt(form.easeOfUse.value),
+                    poseAccuracy: parseInt(form.poseAccuracy.value),
+                    visualQuality: parseInt(form.visualQuality.value),
+                    dashboardUtility: parseInt(form.dashboardUtility.value),
+                    overallSatisfaction: parseInt(form.overallSatisfaction.value)
+                },
+                comments: document.getElementById('comments').value
+            };
+
+            try {
+                const response = await fetch('/api/evaluation/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    document.getElementById('formCard').style.display = 'none';
+                    document.getElementById('successCard').style.display = 'block';
+                } else {
+                    alert('Submission failed. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Feedback';
+                }
+            } catch (err) {
+                alert('Connection error.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Feedback';
+            }
+        });
+    </script>
+</body>
+</html>

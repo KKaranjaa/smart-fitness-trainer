@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Workout - Smart Fitness Trainer</title>
+  <meta name="description" content="Real-time AI pose detection and exercise form correction using TensorFlow.js MoveNet.">
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--color-primary);
+      font-family: 'Inter', var(--font-family, sans-serif);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-3, 12px) var(--space-5, 20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3, 12px);
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: var(--text-lg, 1.125rem);
+      font-weight: var(--weight-bold, 700);
+      color: var(--color-text-primary);
+    }
+
+    .ai-badge {
+      background: linear-gradient(135deg, #02C39A, #028090);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .back-link {
+      color: var(--color-accent, #02C39A);
+      text-decoration: none;
+      font-size: var(--text-sm, 0.875rem);
+      font-weight: var(--weight-medium, 500);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.2s;
+    }
+    .back-link:hover { opacity: 0.75; }
+
+    /* ── Layout ── */
+    .workout-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--space-5, 20px);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-5, 20px);
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Video Section ── */
+    .video-section {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg, 12px);
+      border: 1px solid var(--color-border);
+      padding: var(--space-5, 20px);
+      overflow: hidden;
+    }
+
+    .video-section-title {
+      font-size: var(--text-md, 1rem);
+      font-weight: var(--weight-semibold, 600);
+      margin: 0 0 var(--space-3, 12px) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2, 8px);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    .camera-container {
+      position: relative;
+      width: 100%;
+      border-radius: var(--radius-md, 8px);
+      overflow: hidden;
+      background: #000;
+      aspect-ratio: 4/3;
+    }
+
+    .camera-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm, 0.875rem);
+      background: #111;
+    }
+
+    .camera-icon {
+      font-size: 3rem;
+      opacity: 0.4;
+    }
+
+    #webcam {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transform: scaleX(-1); /* Mirror for selfie view */
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: scaleX(-1); /* Mirror to match video */
+    }
+
+    /* Skeleton confidence overlay */
+    .confidence-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.65);
+      color: #02C39A;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: none;
+    }
+
+    .camera-status {
+      margin-top: var(--space-3, 12px);
+      padding: var(--space-3, 12px) var(--space-4, 16px);
+      background: var(--color-elevated);
+      border-radius: var(--radius-sm, 6px);
+      font-size: var(--text-sm, 0.875rem);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .status-loading { color: var(--color-text-secondary); }
+    .status-ready   { color: #02C39A; font-weight: 600; }
+    .status-error   { color: #ef4444; }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #02C39A;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Feedback Section ── */
+    .feedback-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4, 16px);
+    }
+
+    .panel {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg, 12px);
+      padding: var(--space-4, 16px);
+    }
+
+    .panel-title {
+      font-size: var(--text-md, 1rem);
+      font-weight: var(--weight-semibold, 600);
+      margin: 0 0 var(--space-3, 12px) 0;
+    }
+
+    /* ── Form Status Card ── */
+    .form-status {
+      padding: var(--space-4, 16px);
+      border-radius: var(--radius-md, 8px);
+      border-left: 4px solid transparent;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-status.idle {
+      background: var(--color-elevated);
+      border-left-color: var(--color-text-secondary);
+    }
+
+    .form-status.good {
+      background: rgba(2, 195, 154, 0.1);
+      border-left-color: #02C39A;
+    }
+
+    .form-status.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-left-color: #f59e0b;
+    }
+
+    .form-status.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
+    }
+
+    .form-status-headline {
+      font-weight: 700;
+      font-size: var(--text-base, 1rem);
+      margin-bottom: 4px;
+    }
+
+    .form-status.good    .form-status-headline { color: #02C39A; }
+    .form-status.warning .form-status-headline { color: #f59e0b; }
+    .form-status.error   .form-status-headline { color: #ef4444; }
+    .form-status.idle    .form-status-headline { color: var(--color-text-secondary); }
+
+    .correction-message {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ── Exercise Info ── */
+    .exercise-info {
+      background: var(--color-elevated);
+      padding: var(--space-3, 12px);
+      border-radius: var(--radius-md, 8px);
+    }
+
+    .exercise-name {
+      font-size: var(--text-md, 1rem);
+      font-weight: var(--weight-semibold, 600);
+      margin-bottom: 4px;
+    }
+
+    .exercise-sub {
+      font-size: var(--text-xs, 0.75rem);
+      color: var(--color-text-secondary);
+    }
+
+    /* ── Rep Counter ── */
+    .rep-display {
+      text-align: center;
+      padding: var(--space-3, 12px) 0;
+    }
+
+    .rep-number {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--color-accent, #02C39A);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rep-label {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-2, 8px);
+    }
+
+    .stat-box {
+      background: var(--color-elevated);
+      padding: var(--space-3, 12px) var(--space-2, 8px);
+      border-radius: var(--radius-sm, 6px);
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .stat-value {
+      font-size: var(--text-lg, 1.125rem);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-top: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Buttons ── */
+    .control-buttons {
+      display: flex;
+      gap: var(--space-3, 12px);
+    }
+
+    .btn {
+      flex: 1;
+      padding: var(--space-3, 12px) var(--space-4, 16px);
+      border: none;
+      border-radius: var(--radius-sm, 6px);
+      font-size: var(--text-base, 1rem);
+      font-weight: var(--weight-semibold, 600);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #02C39A, #028090);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(2, 195, 154, 0.35);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.25);
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── Error Log ── */
+    .error-log {
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2, 8px);
+      /* Custom scrollbar */
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border) transparent;
+    }
+
+    .error-log:empty::before {
+      content: 'No corrections logged yet.';
+      color: var(--color-text-secondary);
+      font-size: var(--text-sm, 0.875rem);
+      font-style: italic;
+    }
+
+    .error-item {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      padding: var(--space-2, 8px) var(--space-3, 12px);
+      border-radius: var(--radius-sm, 6px);
+      font-size: var(--text-xs, 0.75rem);
+    }
+
+    .error-item-msg {
+      color: var(--color-text-primary);
+      margin-bottom: 2px;
+    }
+
+    .error-item-time {
+      color: var(--color-text-secondary);
+      font-size: 10px;
+    }
+
+    /* ── Skeleton keypoint glow ── */
+    .kp-glow {
+      filter: drop-shadow(0 0 4px #02C39A);
+    }
+
+    /* ── Responsive tweaks ── */
+    @media (max-width: 600px) {
+      .workout-container { padding: var(--space-3, 12px); }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .rep-number { font-size: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>AI Workout</h1>
+      <span class="ai-badge">Live AI</span>
+    </div>
+    <a href="/exercise.html" class="back-link" id="backLink">← Exercise Demo</a>
+  </div>
+
+  <div class="workout-container">
+    <div class="main-grid">
+
+      <!-- ══ Video Section ══ -->
+      <div class="video-section">
+        <p class="video-section-title">
+          <span class="live-dot"></span>
+          Camera Feed + Pose Detection
+        </p>
+
+        <div class="camera-container" id="cameraContainer">
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <div class="camera-icon">📷</div>
+            <span>Waiting for camera…</span>
+          </div>
+          <video id="webcam" autoplay playsinline></video>
+          <canvas id="canvas"></canvas>
+          <div class="confidence-badge" id="confidenceBadge">Detecting…</div>
+        </div>
+
+        <div class="camera-status" id="cameraStatus">
+          <span class="spinner"></span>
+          <span class="status-loading">Initializing camera &amp; AI model…</span>
+        </div>
+      </div>
+
+      <!-- ══ Feedback Section ══ -->
+      <div class="feedback-section">
+
+        <!-- Exercise Info -->
+        <div class="panel">
+          <div class="exercise-info">
+            <div class="exercise-name" id="exerciseName">Loading…</div>
+            <div class="exercise-sub">AI-powered real-time form analysis</div>
+          </div>
+
+          <!-- Form Status -->
+          <div class="form-status idle" id="formStatus" style="margin-top: 12px;">
+            <div class="form-status-headline" id="formHeadline">⏳ Get into position</div>
+            <div class="correction-message" id="correctionMessage">
+              Stand in front of the camera and click "Start Workout" when ready.
+            </div>
+          </div>
+        </div>
+
+        <!-- Rep Counter + Stats -->
+        <div class="panel">
+          <div class="rep-display">
+            <div class="rep-number" id="repCounter">0</div>
+            <div class="rep-label">Repetitions</div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-label">Errors</div>
+              <div class="stat-value" id="errorCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Duration</div>
+              <div class="stat-value" id="duration">0:00</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Accuracy</div>
+              <div class="stat-value" id="accuracy">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="control-buttons">
+          <button id="startBtn" class="btn btn-primary">Start Training</button>
+          <button id="finishBtn" class="btn btn-danger" disabled>Finish Workout</button>
+        </div>
+
+        <!-- Corrections Log -->
+        <div class="panel">
+          <p class="panel-title">📋 Correction Log</p>
+          <div class="error-log" id="errorLog"></div>
+        </div>
+
+      </div><!-- /feedback-section -->
+    </div><!-- /main-grid -->
+  </div><!-- /workout-container -->
+
+  <!-- TensorFlow.js and MoveNet -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+
+  <script>
+    'use strict';
+
+    // ── URL params ──────────────────────────────────────────────────────────
+    const urlParams  = new URLSearchParams(window.location.search);
+    const machineId  = urlParams.get('machine') || 'M001';
+    const machineName = decodeURIComponent(urlParams.get('name') || 'Exercise');
+
+    // ── State ───────────────────────────────────────────────────────────────
+    let detector       = null;
+    let isDetecting    = false;
+    let sessionId      = null;
+    let repCount       = 0;
+    let errorCount     = 0;
+    let goodFrames     = 0;
+    let totalFrames    = 0;
+    let startTime      = null;
+    let durationTimer  = null;
+    let lastPose       = null;
+    let rafId          = null;
+
+    // Rep-counting state (tracks vertical movement of wrists / hips)
+    let prevMidY       = null;
+    let repPhase       = 'up'; // 'up' | 'down'
+
+    // Error throttle: avoid spamming the DB on every frame
+    let lastLogTime    = {};
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const webcamEl    = document.getElementById('webcam');
+    const canvasEl    = document.getElementById('canvas');
+    const ctx         = canvasEl.getContext('2d');
+    const statusEl    = document.getElementById('cameraStatus');
+    const formEl      = document.getElementById('formStatus');
+    const headlineEl  = document.getElementById('formHeadline');
+    const msgEl       = document.getElementById('correctionMessage');
+    const repEl       = document.getElementById('repCounter');
+    const errEl       = document.getElementById('errorCount');
+    const durEl       = document.getElementById('duration');
+    const accEl       = document.getElementById('accuracy');
+    const logEl       = document.getElementById('errorLog');
+    const startBtn     = document.getElementById('startBtn');
+    const finishBtn    = document.getElementById('finishBtn');
+    const video        = document.getElementById('webcam');
+    const badge       = document.getElementById('confidenceBadge');
+    const placeholder = document.getElementById('cameraPlaceholder');
+
+    // ── MoveNet keypoint index map ─────────────────────────────────────────
+    const KP = {
+      nose:0, leftEye:1, rightEye:2, leftEar:3, rightEar:4,
+      leftShoulder:5, rightShoulder:6,
+      leftElbow:7, rightElbow:8,
+      leftWrist:9, rightWrist:10,
+      leftHip:11, rightHip:12,
+      leftKnee:13, rightKnee:14,
+      leftAnkle:15, rightAnkle:16
+    };
+
+    const SKELETON_CONNECTIONS = [
+      [KP.leftShoulder, KP.rightShoulder],
+      [KP.leftShoulder, KP.leftElbow],    [KP.leftElbow, KP.leftWrist],
+      [KP.rightShoulder, KP.rightElbow],  [KP.rightElbow, KP.rightWrist],
+      [KP.leftShoulder, KP.leftHip],      [KP.rightShoulder, KP.rightHip],
+      [KP.leftHip, KP.rightHip],
+      [KP.leftHip, KP.leftKnee],          [KP.leftKnee, KP.leftAnkle],
+      [KP.rightHip, KP.rightKnee],        [KP.rightKnee, KP.rightAnkle]
+    ];
+    
+    // ── Global State ──
+    const sessionUser = JSON.parse(localStorage.getItem('user'));
+    const currentUserId = sessionUser ? sessionUser.userId : 'U001';
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    window.addEventListener('load', async () => {
+      document.getElementById('exerciseName').textContent = machineName;
+
+      // Update back link to preserve machine context
+      document.getElementById('backLink').href =
+        `/exercise.html?machine=${machineId}&name=${encodeURIComponent(machineName)}`;
+
+      await initCamera();
+      await loadModel();
+    });
+
+    // ── Camera ───────────────────────────────────────────────────────────────
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+          audio: false
+        });
+        webcamEl.srcObject = stream;
+        placeholder.style.display = 'none';
+
+        await new Promise(resolve => { webcamEl.onloadedmetadata = resolve; });
+        canvasEl.width  = webcamEl.videoWidth  || 640;
+        canvasEl.height = webcamEl.videoHeight || 480;
+
+      } catch (err) {
+        console.error('Camera error:', err);
+        setStatus('<span class="status-error">⚠ Camera access denied. Enable camera permissions and refresh.</span>', false);
+      }
+    }
+
+    // ── Model ─────────────────────────────────────────────────────────────────
+    async function loadModel() {
+      try {
+        setStatus('<span class="spinner"></span><span class="status-loading">Loading MoveNet AI model…</span>', false);
+
+        detector = await poseDetection.createDetector(
+          poseDetection.SupportedModels.MoveNet,
+          { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+        );
+
+        setStatus('<span class="status-ready">✓ AI Ready — click "Start Workout" to begin</span>', false);
+        startBtn.disabled = false;
+
+      } catch (err) {
+        console.error('Model error:', err);
+        setStatus('<span class="status-error">⚠ Failed to load AI model. Please refresh.</span>', false);
+      }
+    }
+
+    function setStatus(html, showSpinner) {
+      statusEl.innerHTML = (showSpinner ? '<span class="spinner"></span>' : '') + html;
+    }
+
+    // ── Workout controls ──────────────────────────────────────────────────────
+    startBtn.addEventListener('click', () => {
+        startWorkout();
+    });
+
+    finishBtn.addEventListener('click', () => {
+        finishWorkout();
+    });
+
+    async function startWorkout() {
+      if (!detector) { alert('AI model is still loading. Please wait.'); return; }
+
+      // Create session in DB
+      try {
+        const res  = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ machineId, exerciseName: machineName, userId: currentUserId })
+        });
+        const data = await res.json();
+        if (data.status === 'success') sessionId = data.data.sessionId;
+      } catch (e) { console.warn('Session creation failed:', e); }
+
+      // Reset state
+      isDetecting = true;
+      repCount = errorCount = goodFrames = totalFrames = 0;
+      prevMidY  = null;
+      repPhase  = 'up';
+      lastLogTime = {};
+      startTime = Date.now();
+
+      repEl.textContent  = '0';
+      errEl.textContent  = '0';
+      accEl.textContent  = '—';
+      logEl.innerHTML    = '';
+      startBtn.disabled  = true;
+      finishBtn.disabled = false;
+      badge.style.display = 'block';
+
+      setStatus('<span class="status-ready">🔴 Detecting pose…</span>', false);
+
+      durationTimer = setInterval(updateDuration, 1000);
+      detectLoop();
+    }
+
+    async function finishWorkout() {
+      isDetecting = false;
+      if (rafId) cancelAnimationFrame(rafId);
+      clearInterval(durationTimer);
+
+      startBtn.disabled = false;
+      finishBtn.disabled = true;
+      finishBtn.textContent = 'Saving...';
+      badge.style.display = 'none';
+
+      await saveSession();
+
+      setFormStatus('good',
+        '🏁 Workout Complete!',
+        `${repCount} rep${repCount !== 1 ? 's' : ''} completed with ${errorCount} form correction${errorCount !== 1 ? 's' : ''}. <br><br><a href="/user-dashboard.html" style="color:var(--color-accent); font-weight:700; text-decoration:none;">View My Progress →</a>`
+      );
+      setStatus('<span class="status-ready">Session saved. Well done!</span>', false);
+      finishBtn.textContent = 'Finish Workout';
+    }
+
+    async function saveSession() {
+      if (!sessionId) return;
+      
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+      const calculatedAcc = totalFrames > 0 ? Math.round((goodFrames / totalFrames) * 100) : 100;
+      const accValue = Math.min(100, Math.max(0, calculatedAcc));
+
+      try {
+        await fetch(`/api/sessions/${sessionId}/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            reps: repCount,
+            duration: duration,
+            accuracy: accValue
+          })
+        });
+      } catch (e) { console.error('Failed to save session:', e); }
+    }
+
+    // ── Detection loop ────────────────────────────────────────────────────────
+    async function detectLoop() {
+      if (!isDetecting) return;
+
+      try {
+        const poses = await detector.estimatePoses(webcamEl, { flipHorizontal: false });
+
+        if (poses.length > 0) {
+          lastPose = poses[0];
+          totalFrames++;
+
+          drawSkeleton(lastPose);
+          const error = analyzeForm(lastPose);
+          if (!error) goodFrames++;
+
+          // Confidence badge
+          const avgConf = lastPose.keypoints
+            .slice(5)  // skip face kps for body confidence
+            .reduce((s, k) => s + (k.score || 0), 0) / 12;
+          badge.textContent = `Confidence: ${(avgConf * 100).toFixed(0)}%`;
+        } else {
+          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+          badge.textContent = 'No pose detected';
+        }
+      } catch (err) {
+        console.error('Detection frame error:', err);
+      }
+
+      rafId = requestAnimationFrame(detectLoop);
+    }
+
+    // ── Skeleton drawing ──────────────────────────────────────────────────────
+    function drawSkeleton(pose) {
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+      const kps  = pose.keypoints;
+      const minC = 0.25;
+
+      // Connections first (behind dots)
+      ctx.lineWidth   = 2.5;
+      ctx.strokeStyle = 'rgba(2, 128, 144, 0.85)';
+
+      SKELETON_CONNECTIONS.forEach(([i, j]) => {
+        const a = kps[i], b = kps[j];
+        if ((a.score || 0) > minC && (b.score || 0) > minC) {
+          ctx.beginPath();
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      });
+
+      // Keypoint dots
+      kps.forEach(kp => {
+        if ((kp.score || 0) > minC) {
+          ctx.beginPath();
+          ctx.arc(kp.x, kp.y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = '#02C39A';
+          ctx.shadowColor = '#02C39A';
+          ctx.shadowBlur  = 8;
+          ctx.fill();
+          ctx.shadowBlur  = 0;
+        }
+      });
+    }
+
+    // ── Helper: angle between three points ───────────────────────────────────
+    function calcAngle(a, b, c) {
+      const rad = Math.atan2(c.y - b.y, c.x - b.x) -
+                  Math.atan2(a.y - b.y, a.x - b.x);
+      let deg = Math.abs(rad * (180 / Math.PI));
+      if (deg > 180) deg = 360 - deg;
+      return deg;
+    }
+
+    function kpVisible(kp, threshold = 0.3) {
+      return kp && (kp.score || 0) > threshold;
+    }
+
+    // ── Form analysis: dispatch by machine ───────────────────────────────────
+    function analyzeForm(pose) {
+      const kps = pose.keypoints;
+
+      // Run machine-specific checks; returns { issueType, severity, correction } or null
+      let result = null;
+      switch (machineId) {
+        case 'M001': result = checkTreadmill(kps);    break; // Running
+        case 'M002': result = checkLegPress(kps);     break; // Leg Press
+        case 'M003': result = checkChestPress(kps);   break; // Chest Press
+        case 'M004': result = checkLatPulldown(kps);  break; // Lat Pulldown
+        case 'M005': result = checkBike(kps);         break; // Stationary Bike
+        default:     result = checkGeneral(kps);      break;
+      }
+
+      // ── Rep counting (wrist midpoint vertical cycle — works for all machines) ──
+      const lWr = kps[KP.leftWrist];
+      const rWr = kps[KP.rightWrist];
+      if (kpVisible(lWr) && kpVisible(rWr)) {
+        const midY = (lWr.y + rWr.y) / 2;
+        if (prevMidY !== null) {
+          const diff = midY - prevMidY;
+          if (repPhase === 'up'   && diff >  10) repPhase = 'down';
+          if (repPhase === 'down' && diff < -10) {
+            repPhase = 'up';
+            repCount++;
+            repEl.textContent = repCount;
+          }
+        }
+        prevMidY = midY;
+      }
+
+      // ── Update UI + log ──
+      if (result) {
+        setFormStatus('warning', '⚠ Form Issue Detected', result.correction);
+        maybeLogError(result.issueType, result.severity, result.correction);
+      } else {
+        goodFrames++;
+        setFormStatus('good', '✓ Good Form!', 'Great technique — keep it up!');
+      }
+
+      if (totalFrames > 0) {
+        accEl.textContent = Math.round((goodFrames / totalFrames) * 100) + '%';
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // M001 — Treadmill (Running posture)
+    // Checks: trunk upright, no excessive forward lean, arms not crossing body
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkTreadmill(kps) {
+      const lSh  = kps[KP.leftShoulder];
+      const lHip = kps[KP.leftHip];
+      const lWr  = kps[KP.leftWrist];
+      const rWr  = kps[KP.rightWrist];
+      const lKn  = kps[KP.leftKnee];
+      const rKn  = kps[KP.rightKnee];
+
+      // 1. Excessive forward lean (horizontal shoulder-to-hip offset)
+      if (kpVisible(lSh) && kpVisible(lHip)) {
+        const lean = lSh.x - lHip.x; // positive = shoulder ahead of hip
+        if (lean > 100) {
+          return { issueType: 'incorrect_back_angle', severity: 'medium',
+            correction: 'Stand taller — you\'re leaning too far forward while running!' };
+        }
+      }
+
+      // 2. Arms crossing the body centre (wrists meeting in front suggests bad arm swing)
+      if (kpVisible(lWr) && kpVisible(rWr)) {
+        const wristGap = Math.abs(lWr.x - rWr.x);
+        if (wristGap < 30) {
+          return { issueType: 'elbow_position', severity: 'low',
+            correction: 'Keep arms swinging forward — don\'t let them cross your body!' };
+        }
+      }
+
+      // 3. Knee valgus (knees drifting inward toward each other while running)
+      if (kpVisible(lKn) && kpVisible(rKn)) {
+        const kneeGap = Math.abs(lKn.x - rKn.x);
+        const hipGap  = kpVisible(lHip) && kpVisible(kps[KP.rightHip])
+          ? Math.abs(lHip.x - kps[KP.rightHip].x) : kneeGap;
+        if (kneeGap < hipGap * 0.35) {
+          return { issueType: 'knee_overextension', severity: 'medium',
+            correction: 'Your knees are coming too close together — keep them aligned with your feet!' };
+        }
+      }
+
+      return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // M002 — Leg Press
+    // Checks: knees tracking wide enough, back not rounding off seat
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkLegPress(kps) {
+      const lKn  = kps[KP.leftKnee];
+      const rKn  = kps[KP.rightKnee];
+      const lHip = kps[KP.leftHip];
+      const rHip = kps[KP.rightHip];
+      const lSh  = kps[KP.leftShoulder];
+
+      // 1. Knee valgus — knees caving inward
+      if (kpVisible(lKn) && kpVisible(rKn) && kpVisible(lHip) && kpVisible(rHip)) {
+        const kneeSpan = Math.abs(lKn.x - rKn.x);
+        const hipSpan  = Math.abs(lHip.x - rHip.x);
+        if (kneeSpan < hipSpan * 0.5) {
+          return { issueType: 'knee_overextension', severity: 'high',
+            correction: 'Knees caving inward — push them out to align with your feet!' };
+        }
+      }
+
+      // 2. Knee overextension — knees going outside shoulder width
+      if (kpVisible(lKn) && kpVisible(rKn) && kpVisible(lSh) && kpVisible(kps[KP.rightShoulder])) {
+        const kneeSpan = Math.abs(lKn.x - rKn.x);
+        const shSpan   = Math.abs(lSh.x - kps[KP.rightShoulder].x);
+        if (kneeSpan > shSpan * 1.8) {
+          return { issueType: 'knee_overextension', severity: 'medium',
+            correction: 'Feet too wide — keep knees aligned over your toes, not flared out!' };
+        }
+      }
+
+      // 3. Hip tilt — uneven hips under load
+      if (kpVisible(lHip) && kpVisible(rHip)) {
+        if (Math.abs(lHip.y - rHip.y) > 45) {
+          return { issueType: 'hip_alignment', severity: 'medium',
+            correction: 'Your hips are tilting — press evenly through both feet!' };
+        }
+      }
+
+      return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // M003 — Chest Press
+    // Checks: elbows not flaring above shoulders, shoulders level, wrists in front
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkChestPress(kps) {
+      const lSh = kps[KP.leftShoulder];
+      const rSh = kps[KP.rightShoulder];
+      const lEl = kps[KP.leftElbow];
+      const rEl = kps[KP.rightElbow];
+      const lWr = kps[KP.leftWrist];
+      const rWr = kps[KP.rightWrist];
+
+      // 1. Elbow flare above shoulder level (elbows should stay at/below shoulder)
+      if (kpVisible(lEl) && kpVisible(lSh)) {
+        if (lEl.y < lSh.y - 30) { // y is smaller = higher on screen
+          return { issueType: 'elbow_position', severity: 'high',
+            correction: 'Elbows are too high — lower them to shoulder level to protect your rotator cuff!' };
+        }
+      }
+      if (kpVisible(rEl) && kpVisible(rSh)) {
+        if (rEl.y < rSh.y - 30) {
+          return { issueType: 'elbow_position', severity: 'high',
+            correction: 'Elbows are too high — bring them down to shoulder height!' };
+        }
+      }
+
+      // 2. Shoulder imbalance — one shoulder significantly higher during press
+      if (kpVisible(lSh) && kpVisible(rSh)) {
+        if (Math.abs(lSh.y - rSh.y) > 35) {
+          return { issueType: 'hip_alignment', severity: 'medium',
+            correction: 'Shoulders are uneven — press with equal force on both sides!' };
+        }
+      }
+
+      // 3. Wrists dropping below elbow level (wrist should be above or level with elbow)
+      if (kpVisible(lWr) && kpVisible(lEl)) {
+        if (lWr.y > lEl.y + 40) { // wrist significantly lower than elbow
+          return { issueType: 'elbow_position', severity: 'medium',
+            correction: 'Keep your wrists stacked above your elbows — don\'t let them drop!' };
+        }
+      }
+
+      return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // M004 — Lat Pulldown
+    // Checks: excessive back lean, elbows not flaring outward, shoulders level
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkLatPulldown(kps) {
+      const lSh  = kps[KP.leftShoulder];
+      const rSh  = kps[KP.rightShoulder];
+      const lHip = kps[KP.leftHip];
+      const lEl  = kps[KP.leftElbow];
+      const rEl  = kps[KP.rightElbow];
+      const lWr  = kps[KP.leftWrist];
+      const rWr  = kps[KP.rightWrist];
+
+      // 1. Excessive back lean (torso tilted far back during the pull)
+      if (kpVisible(lSh) && kpVisible(lHip)) {
+        const lean = lHip.x - lSh.x; // positive = shoulders behind hips
+        if (lean > 90) {
+          return { issueType: 'incorrect_back_angle', severity: 'medium',
+            correction: 'You\'re leaning back too far — keep a slight natural lean, not excessive!' };
+        }
+      }
+
+      // 2. Elbows flaring above shoulder level on the pull (they should pull DOWN)
+      if (kpVisible(lEl) && kpVisible(lSh)) {
+        if (lEl.y < lSh.y - 40) {
+          return { issueType: 'elbow_position', severity: 'medium',
+            correction: 'Drive your elbows DOWN toward your hips, not out to the sides!' };
+        }
+      }
+
+      // 3. Shoulder shrug — both shoulders rising toward ears
+      if (kpVisible(lSh) && kpVisible(rSh) && kpVisible(kps[KP.nose])) {
+        const nose     = kps[KP.nose];
+        const avgShY   = (lSh.y + rSh.y) / 2;
+        const neckGap  = avgShY - nose.y; // smaller gap = shoulders shrugged up
+        if (neckGap < 30) {
+          return { issueType: 'general_form', severity: 'low',
+            correction: 'Depress your shoulders — don\'t shrug them up toward your ears!' };
+        }
+      }
+
+      // 4. Shoulder imbalance during pull
+      if (kpVisible(lSh) && kpVisible(rSh)) {
+        if (Math.abs(lSh.y - rSh.y) > 40) {
+          return { issueType: 'hip_alignment', severity: 'low',
+            correction: 'Pull evenly with both arms — one shoulder is higher than the other!' };
+        }
+      }
+
+      return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // M005 — Stationary Bike
+    // Checks: rounded back (head drooping), hunched shoulders, knee valgus
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkBike(kps) {
+      const lSh  = kps[KP.leftShoulder];
+      const rSh  = kps[KP.rightShoulder];
+      const lHip = kps[KP.leftHip];
+      const rHip = kps[KP.rightHip];
+      const lKn  = kps[KP.leftKnee];
+      const rKn  = kps[KP.rightKnee];
+      const nose  = kps[KP.nose];
+
+      // 1. Hunched/rounded back — shoulders way forward of hips
+      if (kpVisible(lSh) && kpVisible(lHip)) {
+        const hunch = lHip.x - lSh.x; // positive = shoulders behind hips is fine; negative (shoulders far forward) = hunch
+        if (hunch < -80) {
+          return { issueType: 'incorrect_back_angle', severity: 'medium',
+            correction: 'Straighten your back — you\'re hunching forward over the handlebars!' };
+        }
+      }
+
+      // 2. Head drooping (nose well below shoulder level = neck drooping)
+      if (kpVisible(nose) && kpVisible(lSh)) {
+        if (nose.y > lSh.y + 20) { // nose is BELOW shoulder in y-coords = head dropped
+          return { issueType: 'incorrect_back_angle', severity: 'low',
+            correction: 'Lift your head — keep your gaze forward, not down at the ground!' };
+        }
+      }
+
+      // 3. Knee valgus during pedaling
+      if (kpVisible(lKn) && kpVisible(rKn) && kpVisible(lHip) && kpVisible(rHip)) {
+        const kneeSpan = Math.abs(lKn.x - rKn.x);
+        const hipSpan  = Math.abs(lHip.x - rHip.x);
+        if (kneeSpan < hipSpan * 0.4) {
+          return { issueType: 'knee_overextension', severity: 'medium',
+            correction: 'Knees collapsing inward — pedal with knees aligned over your feet!' };
+        }
+      }
+
+      // 4. Shoulder shrug (raised toward ears)
+      if (kpVisible(lSh) && kpVisible(rSh) && kpVisible(nose)) {
+        const avgShY  = (lSh.y + rSh.y) / 2;
+        const neckGap = avgShY - nose.y;
+        if (neckGap < 25) {
+          return { issueType: 'general_form', severity: 'low',
+            correction: 'Relax your shoulders — drop them away from your ears!' };
+        }
+      }
+
+      return null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Generic fallback checks (used if machineId is unknown)
+    // ─────────────────────────────────────────────────────────────────────────
+    function checkGeneral(kps) {
+      const lSh  = kps[KP.leftShoulder];
+      const lHip = kps[KP.leftHip];
+      const rHip = kps[KP.rightHip];
+      const lKn  = kps[KP.leftKnee];
+      const lAn  = kps[KP.leftAnkle];
+
+      if (kpVisible(lSh) && kpVisible(lHip)) {
+        if (Math.abs(lSh.x - lHip.x) > 120)
+          return { issueType: 'incorrect_back_angle', severity: 'medium',
+            correction: 'Keep your back straight — avoid excessive leaning!' };
+      }
+      if (kpVisible(lKn) && kpVisible(lHip) && kpVisible(lAn)) {
+        if (Math.abs(lKn.x - lHip.x) > 90)
+          return { issueType: 'knee_overextension', severity: 'medium',
+            correction: 'Keep your knees aligned — they\'re drifting out of position!' };
+      }
+      if (kpVisible(lHip) && kpVisible(rHip)) {
+        if (Math.abs(lHip.y - rHip.y) > 45)
+          return { issueType: 'hip_alignment', severity: 'low',
+            correction: 'Level your hips — one side is higher than the other.' };
+      }
+      return null;
+    }
+
+    // ── UI helpers ────────────────────────────────────────────────────────────
+    function setFormStatus(cls, headline, message) {
+      formEl.className        = `form-status ${cls}`;
+      headlineEl.textContent  = headline;
+      msgEl.innerHTML         = message;
+    }
+
+    function updateDuration() {
+      if (!startTime) return;
+      const e = Math.floor((Date.now() - startTime) / 1000);
+      durEl.textContent = `${Math.floor(e / 60)}:${String(e % 60).padStart(2, '0')}`;
+    }
+
+    // ── Error throttle + logging ──────────────────────────────────────────────
+    async function maybeLogError(errorType, severity, correction) {
+      const now  = Date.now();
+      const last = lastLogTime[errorType] || 0;
+      if (now - last < 4000) return; // throttle: max once per 4 s per error type
+      lastLogTime[errorType] = now;
+
+      errorCount++;
+      errEl.textContent = errorCount;
+
+      // Add to on-screen log
+      const item = document.createElement('div');
+      item.className = 'error-item';
+      item.innerHTML = `
+        <div class="error-item-msg">⚠ ${correction}</div>
+        <div class="error-item-time">${new Date().toLocaleTimeString()}</div>
+      `;
+      logEl.insertBefore(item, logEl.firstChild);
+
+      // Persist to database
+      if (!sessionId) return;
+      try {
+        await fetch('/api/posture-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            errorType,
+            severity,
+            correctionGiven: correction,
+            poseData: lastPose ? {
+              keypoints: lastPose.keypoints.map(k => ({
+                name: k.name, x: k.x, y: k.y, score: k.score
+              }))
+            } : null
+          })
+        });
+      } catch (e) { console.warn('Failed to log posture error:', e); }
+    }
+  </script>
+</body>
+</html>

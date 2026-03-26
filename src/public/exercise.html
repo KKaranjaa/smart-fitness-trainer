@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Demo - Smart Fitness Trainer</title>
+    <link rel="stylesheet" href="css/design-system.css">
+
+    <!-- AR.js and A-Frame -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
+
+    <style>
+        /* Specific page styles on top of design system */
+        body {
+            background-color: var(--color-primary);
+            overflow-x: hidden;
+            padding-top: 56px;
+            /* Space for fixed nav */
+        }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background-color: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-4);
+            z-index: 1000;
+        }
+
+        .nav-title {
+            font-size: var(--text-md);
+            font-weight: var(--weight-semibold);
+        }
+
+        .nav-back {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-size: var(--text-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--space-1);
+        }
+
+        /* Layout Grid */
+        .main-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: var(--space-4);
+            display: grid;
+            gap: var(--space-5);
+        }
+
+        @media (min-width: 768px) {
+            .main-container {
+                grid-template-columns: 65% 35%;
+            }
+        }
+
+        /* Machine Header */
+        .machine-header {
+            grid-column: 1 / -1;
+            margin-bottom: var(--space-4);
+        }
+
+        .breadcrumb {
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+            margin-bottom: var(--space-2);
+        }
+
+        .machine-title-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            margin-bottom: var(--space-2);
+        }
+
+        .machine-title {
+            font-size: var(--text-xl);
+            font-weight: var(--weight-bold);
+        }
+
+        .category-badge {
+            font-size: var(--text-xs);
+            font-weight: var(--weight-semibold);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+        }
+
+        .category-cardio {
+            background-color: var(--color-elevated);
+            color: var(--color-accent);
+        }
+
+        .category-strength {
+            background-color: var(--color-elevated);
+            color: #60a5fa;
+        }
+
+        /* AR Viewer */
+        .ar-viewer-container {
+            position: relative;
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            width: 100%;
+            height: 300px;
+        }
+
+        @media (min-width: 768px) {
+            .ar-viewer-container {
+                height: 480px;
+            }
+        }
+
+        .ar-controls {
+            position: absolute;
+            bottom: var(--space-4);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: var(--space-2);
+            background: rgba(0, 0, 0, 0.5);
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
+            z-index: 10;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: var(--text-xs);
+            transition: all var(--duration-fast);
+        }
+
+        .control-btn.active {
+            background: var(--color-elevated);
+            color: var(--color-text-primary);
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            width: 100%;
+            height: 100%;
+            background: var(--color-surface);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skeleton::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-3);
+        }
+
+        .panel-title {
+            font-size: var(--text-md);
+            font-weight: var(--weight-semibold);
+        }
+
+        /* Steps */
+        .step-item {
+            display: flex;
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+            padding: var(--space-3);
+            border-left: 3px solid transparent;
+            transition: border-color var(--duration-base);
+        }
+
+        .step-item.active {
+            border-left-color: var(--color-accent);
+            background: var(--color-elevated);
+        }
+
+        .step-number {
+            font-weight: var(--weight-bold);
+            color: var(--color-text-secondary);
+        }
+
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--space-4);
+        }
+
+        /* Safety Panel */
+        .safety-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--duration-enter) var(--ease-decelerate);
+        }
+
+        .safety-content.expanded {
+            max-height: 500px;
+            /* Arbitrary large height */
+        }
+
+        .safety-toggle {
+            cursor: pointer;
+            transition: transform var(--duration-base);
+        }
+
+        .safety-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        .warning-text {
+            color: var(--color-warning);
+            background: var(--color-warning-light);
+            padding: var(--space-2);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-2);
+            font-size: var(--text-sm);
+        }
+
+        /* Session Panel */
+        .session-btn {
+            background: var(--color-accent);
+            color: var(--color-text-primary);
+            border: none;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-sm);
+            font-size: var(--text-base);
+            font-weight: var(--weight-semibold);
+            cursor: pointer;
+            width: 100%;
+            transition: transform var(--duration-base), box-shadow var(--duration-base);
+        }
+
+        .session-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .session-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .success-bg {
+            background-color: var(--color-success) !important;
+        }
+
+        /* Helper for A-Frame fallback */
+        .ar-fallback {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--color-text-secondary);
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <div class="nav-title">Smart Fitness Trainer</div>
+        <a href="/scanner.html" class="nav-back">
+            <span>←</span> Back to Scanner
+        </a>
+    </nav>
+
+    <div class="main-container">
+        <!-- Header -->
+        <header class="machine-header">
+            <div class="breadcrumb">Scanner / <span id="bread-name">Machine</span></div>
+            <div class="machine-title-row">
+                <h1 class="machine-title" id="header-name">Machine</h1>
+                <span class="category-badge" id="category-badge">CATEGORY</span>
+            </div>
+            <p class="text-secondary" id="machine-desc">Loading machine details...</p>
+        </header>
+
+        <!-- Left Column -->
+        <div class="col-left">
+            <!-- AR Viewer -->
+            <div class="ar-viewer-container" id="arViewer">
+                <div class="skeleton" id="arSkeleton">Loading 3D Model...</div>
+
+                <a-scene embedded arjs="debugUIEnabled: false; detectionMode: mono;"
+                    renderer="logarithmicDepthBuffer: true; antialias: true; shadowMapEnabled: true;" 
+                    vr-mode-ui="enabled: false"
+                    style="width: 100%; height: 100%; display: none;" id="aScene">
+
+                    <a-camera position="0 1.6 4" look-controls="enabled: false" id="mainCamera"></a-camera>
+                    
+                    <!-- Environment & Lighting -->
+                    <a-entity environment="preset: contact; groundColor: #1a1a1a; grid: 1; playArea: 1.2; shadow: true; skyType: atmosphere; sunPosition: 0 1 1;"></a-entity>
+                    <a-entity light="type: ambient; intensity: 0.6;"></a-entity>
+                    <a-entity light="type: directional; intensity: 0.8; castShadow: true; shadowCameraLeft: -5; shadowCameraRight: 5; shadowCameraTop: 5; shadowCameraBottom: -5;" position="1 4 3"></a-entity>
+
+                    <!-- Models Wrapper (Shadows enabled) -->
+                    <a-entity id="modelWrapper" position="0 0 0" shadow="receive: true; cast: true;"></a-entity>
+                </a-scene>
+
+                <!-- Controls Overlay -->
+                <div class="ar-controls">
+                    <button class="control-btn active" onclick="setView('front')">Front</button>
+                    <button class="control-btn" onclick="setView('side')">Side</button>
+                    <button class="control-btn" onclick="setView('top')">Top</button>
+                    <span style="width: 1px; background: var(--color-border); margin: 0 4px;"></span>
+                    <button class="control-btn" onclick="togglePlay()" id="playBtn">Pause</button>
+                    <button class="control-btn" onclick="toggleSpeed()" id="speedBtn">1x</button>
+                </div>
+            </div>
+
+            <!-- Controls Panel (Mobile only - hidden on desktop via CSS grid placement if needed, but per specs keeping structure simple) -->
+            <!-- The prompt asked for "Exercise controls panel" separate from viewer controls? 
+                 The prompt says "Viewer Controls (overlaid)". 
+                 So this section in the layout might be redundant if controls are overlaid. 
+                 But layout spec says "[Exercise Controls]" in the grid.
+                 I will keep the overlaid controls for the viewer, and maybe this separate panel is for extra stuff or just omitted if overlay covers it.
+                 Actually, the prompt puts "Exercise controls panel" in the list of page structure.
+                 I'll assume the overlaid controls ARE the exercise controls.
+            -->
+
+            <!-- Safety Guidelines -->
+            <div class="panel">
+                <div class="panel-header" onclick="toggleSafety()">
+                    <span class="panel-title">Safety Guidelines</span>
+                    <span class="safety-toggle" id="safetyChevron">▼</span>
+                </div>
+                <div class="safety-content" id="safetyContent">
+                    <div id="safetyList"></div>
+                </div>
+            </div>
+
+            <!-- Session Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Ready to start your workout?</span>
+                </div>
+                <p class="text-secondary" style="margin-bottom: var(--space-4);">Your session will be recorded for
+                    progress tracking</p>
+                <button class="session-btn" id="beginSessionBtn" onclick="beginSession()">Begin Session</button>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-right">
+            <!-- Exercise Steps -->
+            <div class="panel" style="position: sticky; top: 70px;">
+                <div class="panel-header">
+                    <span class="panel-title">Instructions</span>
+                    <span class="text-secondary step-counter" id="stepCounter">Step 1 of 5</span>
+                </div>
+
+                <div id="stepsContainer">
+                    <!-- Steps injected here -->
+                </div>
+
+                <div class="step-nav">
+                    <button class="control-btn" id="prevStepBtn" onclick="changeStep(-1)">Previous</button>
+                    <button class="control-btn" id="nextStepBtn" onclick="changeStep(1)">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State and Data ---
+        const params = new URLSearchParams(window.location.search);
+        const machineId = params.get('machine');
+        const machineName = params.get('name') || 'Machine';
+
+        let currentStep = 0;
+        let steps = [];
+        let animationSpeed = 1.0;
+        let isPlaying = true;
+        let currentView = 'front';
+
+        // --- Hardcoded Steps Data (as requested) ---
+        const STEPS_DATA = {
+            'M001': [
+                "Step on the belt while it is stationary and clip the safety cord to your clothing",
+                "Start at a slow warm-up pace between 3 and 5 km/h",
+                "Stand upright with shoulders back, look straight ahead, and keep arms relaxed",
+                "Increase speed gradually; land with a midfoot strike, not heel or toe",
+                "To stop, reduce speed first, then step onto the side rails before the belt halts"
+            ],
+            'M002': [
+                "Adjust the seat so your knees form roughly a 90-degree angle when feet are on the platform",
+                "Place feet shoulder-width apart, toes pointing slightly outward",
+                "Press the platform away by driving through your heels until legs are almost straight",
+                "Do not lock your knees at full extension; keep a slight bend",
+                "Lower the platform slowly under control until knees return to 90 degrees"
+            ],
+            'M003': [
+                "Adjust the seat height so handles are level with your mid-chest",
+                "Grip the handles with palms facing forward, wrists straight",
+                "Press both handles forward until arms are nearly extended",
+                "Pause briefly at full extension without locking your elbows",
+                "Return the handles slowly to the start position, feeling the chest stretch"
+            ],
+            'M004': [
+                "Adjust the thigh pad so your legs are secured firmly against it",
+                "Grip the bar slightly wider than shoulder-width, palms facing away",
+                "Lean back slightly and pull the bar down toward your upper chest",
+                "Squeeze your shoulder blades together at the bottom of the movement",
+                "Return the bar upward in a slow, controlled manner until arms are fully extended"
+            ],
+            'M005': [
+                "Adjust the seat so there is a slight bend in your knee at the bottom of the pedal stroke",
+                "Set handlebar height so you are not hunching forward",
+                "Begin pedaling at low resistance to warm up for two minutes",
+                "Maintain a smooth, circular pedal stroke rather than pushing straight down",
+                "Keep your upper body still; all movement should come from your legs"
+            ]
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!machineId) {
+                alert('No machine specified. Redirecting to scanner.');
+                window.location.href = '/scanner.html';
+                return;
+            }
+
+            // Load Data
+            loadMachineData(machineId);
+            loadSteps(machineId);
+
+            // init AR when ready
+            // A-Frame takes a moment
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('loaded', () => {
+                document.getElementById('arSkeleton').style.display = 'none';
+                scene.style.display = 'block';
+                initModel(machineId);
+            });
+
+            // Fallback
+            window.addEventListener('error', function (e) {
+                if (e.message && e.message.includes('aframe')) {
+                    document.getElementById('arViewer').innerHTML = `
+                      <div class="ar-fallback">
+                        <p>3D viewer could not load. Please check your connection.</p>
+                      </div>
+                    `;
+                }
+            });
+        });
+
+        // --- API & Data Functions ---
+        async function loadMachineData(id) {
+            try {
+                // We use the passed name initially to show something fast
+                document.getElementById('header-name').textContent = decodeURIComponent(machineName);
+                document.getElementById('bread-name').textContent = decodeURIComponent(machineName);
+
+                const response = await fetch(`/api/machines/${id}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    const m = data.data;
+                    document.getElementById('header-name').textContent = m.name;
+                    document.getElementById('bread-name').textContent = m.name;
+                    document.getElementById('machine-desc').textContent = m.description || 'No description available.';
+
+                    const catBadge = document.getElementById('category-badge');
+                    catBadge.textContent = m.category;
+                    if (m.category === 'Cardio') {
+                        catBadge.classList.add('category-cardio');
+                    } else {
+                        catBadge.classList.add('category-strength');
+                    }
+
+                    // Populate Safety
+                    const safetyList = document.getElementById('safetyList');
+                    if (m.safetyGuidelines && m.safetyGuidelines.length) {
+                        m.safetyGuidelines.forEach(sg => {
+                            const p = document.createElement('p');
+                            p.className = 'warning-text';
+                            p.textContent = '• ' + sg;
+                            safetyList.appendChild(p);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load machine data", err);
+            }
+        }
+
+        function loadSteps(id) {
+            steps = STEPS_DATA[id] || ["Follow general gym safety rules."];
+            renderStep(0);
+        }
+
+        // --- UI Functions ---
+        function renderStep(index) {
+            const container = document.getElementById('stepsContainer');
+            container.innerHTML = '';
+
+            steps.forEach((text, i) => {
+                const el = document.createElement('div');
+                el.className = `step-item ${i === index ? 'active' : ''}`;
+                el.innerHTML = `
+                    <div class="step-number">${i + 1}</div>
+                    <div class="step-text">${text}</div>
+                `;
+                container.appendChild(el);
+            });
+
+            currentStep = index;
+            document.getElementById('stepCounter').textContent = `Step ${index + 1} of ${steps.length}`;
+
+            // Update buttons
+            const prev = document.getElementById('prevStepBtn');
+            const next = document.getElementById('nextStepBtn');
+
+            prev.disabled = index === 0;
+            next.disabled = index === steps.length - 1;
+        }
+
+        function changeStep(delta) {
+            const newIndex = currentStep + delta;
+            if (newIndex >= 0 && newIndex < steps.length) {
+                renderStep(newIndex);
+            }
+        }
+
+        function toggleSafety() {
+            const content = document.getElementById('safetyContent');
+            const icon = document.getElementById('safetyChevron');
+
+            content.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+        }
+
+        // --- Session Logic ---
+        function beginSession() {
+            // Navigate to the AI-powered workout page with pose detection
+            const decodedName = decodeURIComponent(machineName);
+            window.location.href = `/workout.html?machine=${machineId}&name=${encodeURIComponent(decodedName)}`;
+        }
+
+        // --- 3D / AR Logic (A-Frame) ---
+        function initModel(id) {
+            const wrapper = document.getElementById('modelWrapper');
+            wrapper.innerHTML = ''; // clear
+
+            // Realistic colors
+            const colorSkin = "#E0B696";
+            const colorShirt = "#10B981"; 
+            const colorPants = "#2C3E50";
+            const colorShoes = "#1A1A1A";
+            const colorMachineFrame = "#374151";
+            const colorMachineAccent = "#3B82F6";
+            const colorMachineWeight = "#DC2626";
+
+            const SCENE_DUR = 2000 / animationSpeed;
+
+            if (id === 'M001') { // Treadmill
+                const scene = document.createElement('a-entity');
+                scene.innerHTML = `
+                    <a-entity id="treadmill" position="0 0 0">
+                        <a-box position="0 0.05 0" width="1.2" height="0.1" depth="2.2" color="${colorMachineFrame}" shadow="cast:true; receive:true"></a-box>
+                        <a-box position="0 0.11 0" width="0.85" height="0.02" depth="2.0" color="#111" roughness="1"></a-box>
+                        <a-box position="-0.5 0.7 -0.3" width="0.05" height="1.3" depth="0.05" color="${colorMachineAccent}"></a-box>
+                        <a-box position="0.5 0.7 -0.3" width="0.05" height="1.3" depth="0.05" color="${colorMachineAccent}"></a-box>
+                        <a-box position="0 1.25 -0.3" width="1.1" height="0.05" depth="0.05" color="${colorMachineAccent}"></a-box>
+                    </a-entity>
+                    
+                    <a-entity id="runner" position="0 0.13 0.2">
+                        <a-sphere position="0 1.75 0" radius="0.12" color="${colorSkin}" shadow="cast:true"></a-sphere> <!-- Head -->
+                        <a-cylinder position="0 1.63 0" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder> <!-- Neck -->
+                        <a-box position="0 1.35 0" width="0.45" height="0.45" depth="0.22" color="${colorShirt}" shadow="cast:true"></a-box> <!-- Torso -->
+                        
+                        <!-- Left Arm (Jointed) -->
+                        <a-entity position="-0.25 1.5 0" animation="property: rotation; from: 40 0 0; to: -40 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.15 0" radius="0.04" height="0.3" color="${colorSkin}"></a-cylinder> <!-- Upper -->
+                            <a-entity position="0 -0.3 0" animation="property: rotation; from: 0 0 0; to: 30 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder> <!-- Lower -->
+                                <a-box position="0 -0.32 0" width="0.08" height="0.05" depth="0.1" color="${colorSkin}"></a-box> <!-- Hand -->
+                            </a-entity>
+                        </a-entity>
+
+                        <!-- Right Arm (Jointed) -->
+                        <a-entity position="0.25 1.5 0" animation="property: rotation; from: -40 0 0; to: 40 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.15 0" radius="0.04" height="0.3" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 -0.3 0" animation="property: rotation; from: 30 0 0; to: 0 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 -0.32 0" width="0.08" height="0.05" depth="0.1" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+
+                        <!-- Left Leg (Jointed) -->
+                        <a-entity position="-0.13 1.1 0" animation="property: rotation; from: -30 0 0; to: 35 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.25 0" radius="0.07" height="0.5" color="${colorPants}"></a-cylinder> <!-- Thigh -->
+                            <a-entity position="0 -0.5 0" animation="property: rotation; from: 0 0 0; to: -40 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder> <!-- Calf -->
+                                <a-box position="0 -0.42 0.05" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box> <!-- Foot -->
+                            </a-entity>
+                        </a-entity>
+
+                        <!-- Right Leg (Jointed) -->
+                        <a-entity position="0.13 1.1 0" animation="property: rotation; from: 35 0 0; to: -30 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.25 0" radius="0.07" height="0.5" color="${colorPants}"></a-cylinder>
+                            <a-entity position="0 -0.5 0" animation="property: rotation; from: -40 0 0; to: 0 0 0; dur: ${SCENE_DUR / 3}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                                <a-box position="0 -0.42 0.05" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                `;
+                wrapper.appendChild(scene);
+
+                        } else if (id === 'M002') { // Leg Press
+                const scene = document.createElement('a-entity');
+                scene.innerHTML = `
+                    <a-entity position="0 0.1 0">
+                        <a-box position="0 0 0" width="0.8" height="0.1" depth="2.0" color="${colorMachineFrame}" shadow="cast:true; receive:true"></a-box>
+                        <a-entity position="0 0.4 -0.5">
+                            <a-box position="0 0.1 -0.2" width="0.5" height="0.8" depth="0.1" color="${colorMachineAccent}" rotation="45 0 0" shadow="receive:true"></a-box>
+                            <a-box position="0 -0.2 0.1" width="0.5" height="0.1" depth="0.5" color="${colorMachineAccent}" shadow="receive:true"></a-box>
+                        </a-entity>
+                        <a-box position="-0.4 0.6 0.6" width="0.05" height="0.05" depth="1.5" color="${colorMachineFrame}" rotation="45 0 0"></a-box>
+                        <a-box position="0.4 0.6 0.6" width="0.05" height="0.05" depth="1.5" color="${colorMachineFrame}" rotation="45 0 0"></a-box>
+                        <a-entity position="0 0.8 0.5" animation="property: position; from: 0 0.5 0.2; to: 0 1.0 0.7; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-box position="0 0 0" width="0.7" height="0.5" depth="0.05" color="#222" rotation="45 0 0"></a-box>
+                            <a-cylinder position="-0.45 0 0" radius="0.15" height="0.1" color="${colorMachineWeight}" rotation="0 0 90"></a-cylinder>
+                            <a-cylinder position="0.45 0 0" radius="0.15" height="0.1" color="${colorMachineWeight}" rotation="0 0 90"></a-cylinder>
+                        </a-entity>
+                    </a-entity>
+                    <a-entity id="exerciser" position="0 0.5 -0.4">
+                        <a-entity position="0 0.2 0" rotation="45 0 0">
+                            <a-box position="0 0.15 -0.1" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" shadow="cast:true"></a-box>
+                            <a-cylinder position="0 0.45 -0.1" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
+                            <a-sphere position="0 0.6 -0.1" radius="0.12" color="${colorSkin}" rotation="-45 0 0"></a-sphere>
+                            <a-entity position="-0.25 0.2 -0.1" rotation="0 0 20">
+                                <a-cylinder position="0 -0.15 0" radius="0.04" height="0.35" color="${colorSkin}"></a-cylinder>
+                                <a-cylinder position="0 -0.4 0.15" radius="0.035" height="0.35" color="${colorSkin}" rotation="-40 0 0"></a-cylinder>
+                            </a-entity>
+                            <a-entity position="0.25 0.2 -0.1" rotation="0 0 -20">
+                                <a-cylinder position="0 -0.15 0" radius="0.04" height="0.35" color="${colorSkin}"></a-cylinder>
+                                <a-cylinder position="0 -0.4 0.15" radius="0.035" height="0.35" color="${colorSkin}" rotation="-40 0 0"></a-cylinder>
+                            </a-entity>
+                        </a-entity>
+                        <a-entity position="0 0 0">
+                            <a-entity position="-0.15 0.1 0.1" animation="property: rotation; from: -70 0 0; to: -10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 0.25 0" radius="0.07" height="0.5" color="${colorPants}"></a-cylinder>
+                                <a-entity position="0 0.5 0" animation="property: rotation; from: 130 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                    <a-cylinder position="0 0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                                    <a-box position="0 0.4 0.05" width="0.12" height="0.06" depth="0.22" color="${colorShoes}" rotation="45 0 0"></a-box>
+                                </a-entity>
+                            </a-entity>
+                            <a-entity position="0.15 0.1 0.1" animation="property: rotation; from: -70 0 0; to: -10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 0.25 0" radius="0.07" height="0.5" color="${colorPants}"></a-cylinder>
+                                <a-entity position="0 0.5 0" animation="property: rotation; from: 130 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                    <a-cylinder position="0 0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                                    <a-box position="0 0.4 0.05" width="0.12" height="0.06" depth="0.22" color="${colorShoes}" rotation="45 0 0"></a-box>
+                                </a-entity>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                `;
+                wrapper.appendChild(scene);
+
+            } else if (id === 'M003') { // Chest Press
+                const scene = document.createElement('a-entity');
+                scene.innerHTML = `
+                    <a-entity position="0 0 0">
+                        <a-box position="0 0.05 0" width="0.8" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
+                        <a-box position="0 0.4 0.2" width="0.4" height="0.08" depth="0.4" color="${colorMachineAccent}" shadow="receive:true; cast:true"></a-box>
+                        <a-box position="0 0.9 -0.1" width="0.35" height="0.8" depth="0.08" color="${colorMachineAccent}" rotation="10 0 0"></a-box>
+                        <a-box position="0 1.0 -0.3" width="0.15" height="1.8" depth="0.15" color="${colorMachineFrame}"></a-box>
+                        <a-box position="0 0.6 -0.3" width="0.3" height="0.8" depth="0.2" color="${colorMachineWeight}"
+                               animation="property: position; from: 0 0.6 -0.3; to: 0 1.2 -0.3; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-box>
+                        <a-entity position="0 1.6 -0.1" animation="property: rotation; from: 20 0 0; to: -15 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-box position="-0.4 -0.4 0.3" width="0.05" height="0.8" depth="0.05" color="#555" rotation="15 0 0"></a-box>
+                            <a-box position="0.4 -0.4 0.3" width="0.05" height="0.8" depth="0.05" color="#555" rotation="15 0 0"></a-box>
+                            <a-cylinder position="-0.4 -0.7 0.4" radius="0.025" height="0.15" color="#111" rotation="90 0 0"></a-cylinder>
+                            <a-cylinder position="0.4 -0.7 0.4" radius="0.025" height="0.15" color="#111" rotation="90 0 0"></a-cylinder>
+                        </a-entity>
+                    </a-entity>
+                    <a-entity position="0 0.45 0.1">
+                        <a-sphere position="0 0.85 0" radius="0.12" color="${colorSkin}" shadow="cast:true"></a-sphere>
+                        <a-cylinder position="0 0.73 -0.02" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-box position="0 0.45 -0.05" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" rotation="10 0 0" shadow="cast:true"></a-box>
+                        <a-entity position="-0.15 0.15 0.15">
+                            <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
+                            <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                            <a-box position="0 -0.4 0.35" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box>
+                        </a-entity>
+                        <a-entity position="0.15 0.15 0.15">
+                            <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
+                            <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                            <a-box position="0 -0.4 0.35" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box>
+                        </a-entity>
+                        <a-entity position="-0.25 0.65 0" animation="property: rotation; from: 50 20 0; to: -15 20 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.15 0" radius="0.04" height="0.3" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 -0.3 0" animation="property: rotation; from: -100 0 0; to: -10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 -0.32 0" width="0.08" height="0.05" depth="0.08" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                        <a-entity position="0.25 0.65 0" animation="property: rotation; from: 50 -20 0; to: -15 -20 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.15 0" radius="0.04" height="0.3" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 -0.3 0" animation="property: rotation; from: -100 0 0; to: -10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 -0.32 0" width="0.08" height="0.05" depth="0.08" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                `;
+                wrapper.appendChild(scene);
+
+            } else if (id === 'M004') { // Lat Pulldown
+                const scene = document.createElement('a-entity');
+                scene.innerHTML = `
+                    <a-entity position="0 0 0">
+                        <a-box position="0 0.05 0" width="0.8" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
+                        <a-box position="0 0.5 0.2" width="0.4" height="0.08" depth="0.4" color="${colorMachineAccent}"></a-box>
+                        <a-cylinder position="0 0.75 0.35" radius="0.06" height="0.5" color="${colorMachineAccent}" rotation="0 0 90"></a-cylinder>
+                        <a-box position="0 1.2 -0.4" width="0.15" height="2.4" depth="0.15" color="${colorMachineFrame}"></a-box>
+                        <a-box position="0 2.4 0" width="0.1" height="0.1" depth="0.8" color="${colorMachineFrame}"></a-box>
+                        <a-entity position="0 2.1 0.4" animation="property: position; from: 0 2.1 0.4; to: 0 1.4 0.4; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                        <!-- Moving Cable and Bar -->
+                        <!-- Start at 1.85 height, pull down to 1.3 -->
+                        <a-entity position="0 1.85 0.35" animation="property: position; from: 0 1.85 0.35; to: 0 1.3 0.35; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 0.25 0" radius="0.01" height="0.5" color="#aaa"></a-cylinder> <!-- Cable -->
+                            <a-cylinder position="0 0 0" radius="0.02" height="1.2" color="#eee" rotation="0 0 90"></a-cylinder> <!-- Wide bar -->
+                            <!-- Grips -->
+                            <a-cylinder position="-0.5 0 0" radius="0.025" height="0.2" color="#111" rotation="0 0 90"></a-cylinder>
+                            <a-cylinder position="0.5 0 0" radius="0.025" height="0.2" color="#111" rotation="0 0 90"></a-cylinder>
+                        </a-entity>
+                        
+                        <!-- Weight Stack -->
+                        <a-box position="0 0.8 -0.4" width="0.3" height="0.6" depth="0.2" color="${colorMachineWeight}"
+                               animation="property: position; from: 0 0.6 -0.4; to: 0 1.15 -0.4; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-box>
+                    </a-entity>
+                    <a-entity position="0 0.55 0.1">
+                        <a-sphere position="0 0.8 0" radius="0.12" color="${colorSkin}" shadow="cast:true" animation="property: rotation; from: -10 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true"></a-sphere>
+                        <a-cylinder position="0 0.68 -0.02" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-box position="0 0.38 -0.05" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" shadow="cast:true" animation="property: rotation; from: -5 0 0; to: -15 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-box>
+                        <a-entity position="-0.12 0.05 0.1">
+                            <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
+                            <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                            <a-box position="0 -0.45 0.35" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box>
+                        </a-entity>
+                        <a-entity position="0.12 0.05 0.1">
+                            <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
+                            <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                            <a-box position="0 -0.45 0.35" width="0.12" height="0.06" depth="0.22" color="${colorShoes}"></a-box>
+                        </a-entity>
+                        <!-- Arms Pulling (Hands tracking the bar mathematically modeled) -->
+                        <a-entity position="-0.25 0.6 0" rotation="0 0 30" animation="property: rotation; from: -145 -15 25; to: -65 -25 35; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.2 0" radius="0.04" height="0.4" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 -0.4 0" animation="property: rotation; from: 10 0 0; to: -80 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.2 0" radius="0.035" height="0.4" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 -0.42 0" width="0.08" height="0.05" depth="0.08" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                        <a-entity position="0.25 0.6 0" rotation="0 0 -30" animation="property: rotation; from: -145 15 -25; to: -65 25 -35; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                            <a-cylinder position="0 -0.2 0" radius="0.04" height="0.4" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 -0.4 0" animation="property: rotation; from: 10 0 0; to: -80 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
+                                <a-cylinder position="0 -0.2 0" radius="0.035" height="0.4" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 -0.42 0" width="0.08" height="0.05" depth="0.08" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                `;
+                wrapper.appendChild(scene);
+
+            } else if (id === 'M005') { // Stationary Bike
+                const scene = document.createElement('a-entity');
+                scene.innerHTML = `
+                    <!-- Machine -->
+                    <a-entity id="bike" position="0 0.1 0">
+                        <a-box position="0 0 0" width="0.4" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
+                        <a-cylinder position="0 0.5 0.3" radius="0.05" height="1.0" color="${colorMachineFrame}" rotation="-20 0 0"></a-cylinder>
+                        <a-cylinder position="0 0.5 -0.3" radius="0.05" height="1.0" color="${colorMachineFrame}" rotation="20 0 0"></a-cylinder>
+                        <a-box position="0 0.95 0.45" width="0.5" height="0.05" depth="0.15" color="${colorMachineAccent}"></a-box>
+                        <a-box position="0 0.95 -0.4" width="0.3" height="0.1" depth="0.3" color="${colorMachineAccent}"></a-box>
+                        
+                        <!-- Flywheel -->
+                        <a-cylinder position="0 0.4 0.3" radius="0.3" height="0.1" color="#888" rotation="0 0 90"></a-cylinder>
+
+                        <!-- Crank & Pedals moved backward -->
+                        <a-entity position="0 0.4 -0.1" animation="property: rotation; from: 0 0 0; to: -360 0 0; dur: ${SCENE_DUR}; loop: true; easing: linear">
+                            <a-box position="-0.15 0.15 0" width="0.02" height="0.3" depth="0.04" color="#333" rotation="0 0 0"></a-box>
+                            <a-box position="0.15 -0.15 0" width="0.02" height="0.3" depth="0.04" color="#333" rotation="0 0 0"></a-box>
+                            <a-entity position="-0.2 0.3 0" animation="property: rotation; from: 0 0 0; to: 360 0 0; dur: ${SCENE_DUR}; loop: true; easing: linear">
+                                <a-box width="0.1" height="0.02" depth="0.12" color="#111"></a-box>
+                            </a-entity>
+                            <a-entity position="0.2 -0.3 0" animation="property: rotation; from: 0 0 0; to: 360 0 0; dur: ${SCENE_DUR}; loop: true; easing: linear">
+                                <a-box width="0.1" height="0.02" depth="0.12" color="#111"></a-box>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                    <a-entity position="0 1.05 -0.35">
+                        <a-sphere position="0 0.6 0.35" radius="0.12" color="${colorSkin}" shadow="cast:true" rotation="-20 0 0"></a-sphere>
+                        <a-cylinder position="0 0.48 0.35" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-box position="0 0.3 0.15" width="0.4" height="0.5" depth="0.2" color="${colorShirt}" rotation="40 0 0" shadow="cast:true"></a-box>
+                        <a-entity position="-0.2 0.4 0.2" rotation="70 20 0">
+                            <a-cylinder position="0 0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 0.3 0" rotation="20 0 0">
+                                <a-cylinder position="0 0.15 0" radius="0.03" height="0.3" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 0.3 0" width="0.06" height="0.06" depth="0.06" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                        <a-entity position="0.2 0.4 0.2" rotation="70 -20 0">
+                            <a-cylinder position="0 0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
+                            <a-entity position="0 0.3 0" rotation="20 0 0">
+                                <a-cylinder position="0 0.15 0" radius="0.03" height="0.3" color="${colorSkin}"></a-cylinder>
+                                <a-box position="0 0.3 0" width="0.06" height="0.06" depth="0.06" color="${colorSkin}"></a-box>
+                            </a-entity>
+                        </a-entity>
+                        <a-entity position="0 0.05 0.05">
+                            <a-entity position="-0.15 0 0" animation="property: rotation; from: -10 0 0; to: -70 0 0; dur: ${SCENE_DUR/2}; dir: alternate; loop: true; easing: easeInOutSine">
+                                 <a-cylinder position="0 -0.2 0" radius="0.07" height="0.4" color="${colorPants}"></a-cylinder>
+                                 <a-entity position="0 -0.4 0" animation="property: rotation; from: 70 0 0; to: 10 0 0; dur: ${SCENE_DUR/2}; dir: alternate; loop: true; easing: easeInOutSine">
+                                    <a-cylinder position="0 -0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                                    <a-box position="0 -0.45 0.05" width="0.1" height="0.05" depth="0.2" color="${colorShoes}"></a-box>
+                                 </a-entity>
+                            </a-entity>
+                            <a-entity position="0.15 0 0" animation="property: rotation; from: -70 0 0; to: -10 0 0; dur: ${SCENE_DUR/2}; dir: alternate; loop: true; easing: easeInOutSine">
+                                 <a-cylinder position="0 -0.2 0" radius="0.07" height="0.4" color="${colorPants}"></a-cylinder>
+                                 <a-entity position="0 -0.4 0" animation="property: rotation; from: 10 0 0; to: 70 0 0; dur: ${SCENE_DUR/2}; dir: alternate; loop: true; easing: easeInOutSine">
+                                    <a-cylinder position="0 -0.2 0" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
+                                    <a-box position="0 -0.45 0.05" width="0.1" height="0.05" depth="0.2" color="${colorShoes}"></a-box>
+                                 </a-entity>
+                            </a-entity>
+                        </a-entity>
+                    </a-entity>
+                `;
+                wrapper.appendChild(scene);
+            } else {
+                const generic = document.createElement('a-entity');
+                generic.innerHTML = `<a-box position="0 1 0" color="gray"></a-box>`;
+                wrapper.appendChild(generic);
+            }
+        }
+
+        // --- View & Controls ---
+        function setView(view) {
+            currentView = view;
+            const cam = document.getElementById('mainCamera');
+
+            // Update buttons
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                if (['Front', 'Side', 'Top'].includes(btn.textContent)) {
+                    btn.classList.remove('active');
+                    if (btn.textContent.toLowerCase() === view) btn.classList.add('active');
+                }
+            });
+
+            if (view === 'front') {
+                cam.setAttribute('position', "0 1.6 4");
+                cam.setAttribute('rotation', "0 0 0");
+            } else if (view === 'side') {
+                cam.setAttribute('position', "4 1.6 0");
+                cam.setAttribute('rotation', "0 90 0");
+            } else if (view === 'top') {
+                cam.setAttribute('position', "0 5 0.1"); // slight offset to avoid gimbal lock issues
+                cam.setAttribute('rotation', "-90 0 0");
+            }
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playBtn').textContent = isPlaying ? 'Pause' : 'Play';
+
+            // Pause all animations
+            const anims = document.querySelectorAll('[animation]');
+            anims.forEach(el => {
+                if (isPlaying) {
+                    el.play();
+                } else {
+                    el.pause();
+                }
+            });
+        }
+
+        function toggleSpeed() {
+            // Simple toggle: 1x -> 2x -> 0.5x -> 1x
+            if (animationSpeed === 1.0) animationSpeed = 2.0;
+            else if (animationSpeed === 2.0) animationSpeed = 0.5;
+            else animationSpeed = 1.0;
+
+            document.getElementById('speedBtn').textContent = animationSpeed + 'x';
+
+            // Re-init model to apply new duration? 
+            // Updating 'dur' on the fly is tricky in A-Frame without component refresh.
+            // Easiest is to clear and re-create for this prototype level.
+            initModel(machineId);
+        }
+
+    </script>
+</body>
+
+</html>

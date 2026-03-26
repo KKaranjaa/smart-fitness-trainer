@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Fitness Trainer - Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) window.location.href = '/login.html';
+        })();
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #2ecc71;
+            --success-bg: #d4edda;
+            --success-text: #155724;
+            --warning-bg: #fff3cd;
+            --warning-text: #856404;
+            --info-bg: #d1ecf1;
+            --info-text: #0c5460;
+            --error-bg: #f8d7da;
+            --error-text: #721c24;
+            --light-bg: #f8f9fa;
+            --text-color: #2c3e50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Scanner Styles */
+        #reader {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .scanner-instructions {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: var(--info-bg);
+            border-radius: 8px;
+            color: var(--info-text);
+        }
+
+        /* Test Controls */
+        .test-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .test-btn {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .test-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Machine Info Display */
+        #machine-info {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .machine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .machine-name {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .machine-category {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .instructions {
+            background: var(--light-bg);
+            border-left: 4px solid #667eea;
+        }
+
+        .safety {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+            border-left: 4px solid #ffc107;
+        }
+
+        .muscles {
+            background: var(--success-bg);
+            color: var(--success-text);
+            border-left: 4px solid #2ecc71;
+        }
+
+        .section-title {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e2e6ea;
+            color: #4a5568;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Loading & Error */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            display: none;
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            color: var(--error-text);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+            text-align: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .actions {
+                flex-direction: column;
+            }
+
+            .header {
+                border-radius: 0 0 20px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header" style="position:relative;">
+            👤 My Progress
+        </a>
+        <h1>🏋️ Smart Fitness Trainer</h1>
+        <p>AR-Powered Workout Assistant</p>
+        <a href="/dashboard.html" style="
+            position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+            background: rgba(255,255,255,0.2); color: white; text-decoration: none;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.4); transition: background 0.2s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.35)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+            📊 Trainer Dashboard
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Scanner Section -->
+        <div id="scanner-section" class="card">
+            <h2>Scan Machine QR Code</h2>
+            <div class="scanner-instructions">
+                Point your camera at the machine QR code to get started
+            </div>
+
+            <div id="reader"></div>
+
+            <div class="test-mode">
+                <h3>🛠️ Developer Test Mode</h3>
+                <p style="margin-bottom: 10px; font-size: 0.9rem; color: #666;">Click a button to simulate scanning a
+                    machine:</p>
+                <div class="test-controls">
+                    <button class="test-btn" onclick="fetchMachineInfo('M001')">Treadmill (M001)</button>
+                    <button class="test-btn" onclick="fetchMachineInfo('M002')">Leg Press (M002)</button>
+                    <button class="test-btn" onclick="fetchMachineInfo('M003')">Chest Press (M003)</button>
+                    <button class="test-btn" onclick="fetchMachineInfo('M004')">Lat Pulldown (M004)</button>
+                    <button class="test-btn" onclick="fetchMachineInfo('M005')">Stationary Bike (M005)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <h3>Searching for machine...</h3>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-message" class="error-message"></div>
+
+        <!-- Machine Info Display -->
+        <div id="machine-info" class="card">
+            <div class="machine-header">
+                <div class="machine-name" id="display-name">Machine Name</div>
+                <div class="machine-category" id="display-category">Category</div>
+            </div>
+
+            <div class="info-section instructions">
+                <span class="section-title">📋 Instructions</span>
+                <div id="display-instructions"></div>
+            </div>
+
+            <div class="info-section target-muscles">
+                <span class="section-title">💪 Target Muscles</span>
+                <div id="display-muscles"></div>
+            </div>
+
+            <div class="info-section safety">
+                <span class="section-title">⚠️ Safety Guidelines</span>
+                <div id="display-safety"></div>
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" onclick="startWorkout()">
+                    🚀 Start Workout (AR Mode)
+                </button>
+                <button class="btn btn-secondary" onclick="resetScanner()">
+                    📷 Scan Another Machine
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const scannerSection = document.getElementById('scanner-section');
+        const machineInfo = document.getElementById('machine-info');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        let html5QrcodeScanner = null;
+
+        // Initialize QR Scanner
+        function onScanSuccess(decodedText, decodedResult) {
+            // Stop scanning
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+
+            // Extract Machine ID (expected format: "MACHINE_M001")
+            let machineId = decodedText;
+            if (decodedText.startsWith('MACHINE_')) {
+                machineId = decodedText.replace('MACHINE_', '');
+            }
+
+            fetchMachineInfo(machineId);
+        }
+
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning
+            // console.warn(`Code scan error = ${error}`);
+        }
+
+        // Initialize scanner when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                },
+                /* verbose= */ false
+            );
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        });
+
+        // Fetch Machine Data
+        async function fetchMachineInfo(machineId) {
+            // Hide scanner, show loading
+            scannerSection.style.display = 'none';
+            loading.style.display = 'block';
+            errorMessage.style.display = 'none';
+            machineInfo.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/machines/${machineId}`);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayMachine(data.data);
+                } else {
+                    showError(data.message || 'Machine not found');
+                }
+            } catch (error) {
+                showError('Failed to connect to server. Please try again.');
+                console.error(error);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Display Machine Data
+        function displayMachine(machine) {
+            machineInfo.dataset.id = machine.machineId; // Store ID for startWorkout
+            document.getElementById('display-name').textContent = machine.name;
+            document.getElementById('display-category').textContent = machine.category;
+
+            // Format arrays or strings
+            document.getElementById('display-instructions').innerHTML = Array.isArray(machine.instructions)
+                ? `<ul>${machine.instructions.map(i => `<li>${i}</li>`).join('')}</ul>`
+                : machine.instructions;
+
+            document.getElementById('display-muscles').textContent = Array.isArray(machine.targetMuscles)
+                ? machine.targetMuscles.join(', ')
+                : machine.targetMuscles;
+
+            document.getElementById('display-safety').innerHTML = Array.isArray(machine.safetyGuidelines)
+                ? `<ul>${machine.safetyGuidelines.map(s => `<li>${s}</li>`).join('')}</ul>`
+                : machine.safetyGuidelines;
+
+            machineInfo.style.display = 'block';
+        }
+
+        // Error Handling
+        function showError(message) {
+            errorMessage.textContent = `❌ Error: ${message}`;
+            errorMessage.style.display = 'block';
+
+            // Allow retry
+            errorMessage.innerHTML += `<br><button class="btn btn-secondary" onclick="resetScanner()" style="margin-top:10px; padding:5px 15px;">Try Again</button>`;
+        }
+
+        // Reset Scanner
+        function resetScanner() {
+            machineInfo.style.display = 'none';
+            errorMessage.style.display = 'none';
+            scannerSection.style.display = 'block';
+
+            // Re-initialize scanner if it was cleared
+            // Note: Html5QrcodeScanner.clear() removes the UI completely.
+            // We might need to reload page or re-render.
+            // Simple approach: reload page for clean state
+            location.reload();
+        }
+
+        // Start Workout Navigation
+        // Start Workout Navigation
+        function startWorkout() {
+            const machineInfo = document.getElementById('machine-info');
+            const machineId = machineInfo.dataset.id;
+            const machineName = document.getElementById('display-name').textContent;
+
+            if (machineId) {
+                window.location.href = `/exercise.html?machine=${machineId}&name=${encodeURIComponent(machineName)}`;
+            } else {
+                alert('Please scan a machine first.');
+            }
+        }
+    </script>
+</body>
+
+</html>

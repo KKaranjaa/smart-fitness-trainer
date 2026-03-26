@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Fitness Trainer - AI Powered Workout Monitoring</title>
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        // Login Guard
+        (function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/login.html';
+            }
+        })();
+        
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(12px);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: radial-gradient(circle at top right, #1a1a2e, #16213e, #0f3460);
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── Hero Section ── */
+        .hero {
+            padding: 80px 24px;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #02C39A, #8b5cf6, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        /* ── Action Cards ── */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        .action-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(2, 195, 154, 0.4);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .action-card::after {
+            content: '→';
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-size: 1.5rem;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+        .action-card:hover::after { opacity: 1; color: #02C39A; }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            background: rgba(2, 195, 154, 0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .action-card h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .action-card p {
+            margin: 0;
+            font-size: 0.95rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.5;
+        }
+
+        /* ── Live Ticker ── */
+        .ticker {
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid var(--glass-border);
+            padding: 15px 0;
+            margin-top: auto;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .ticker-item span { color: #02C39A; margin-right: 5px; }
+
+        /* ── Animation ── */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero, .card-grid {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            .hero { padding: 50px 24px; }
+            .ticker { flex-direction: column; align-items: center; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <div class="hero">
+            <h1 id="welcomeTitle">Elevate Your Training<br>With AI Precision.</h1>
+            <p id="welcomeSub">Combine Augmented Reality visualization with Real-time Pose correction to achieve your perfect form.</p>
+        </div>
+
+        <div class="card-grid">
+            <script>
+                // Show/Hide Trainer Hub based on role
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user && user.role !== 'trainer') {
+                    document.write(`
+                        <style>#trainerCard { display: none; }</style>
+                    `);
+                }
+            </script>
+            <!-- Scanner -->
+            <a href="/scanner.html" class="action-card">
+                <div class="icon-box">📷</div>
+                <h3>Start Training</h3>
+                <p>Scan machine QR codes to unlock AI form tracking and AR exercise demonstrations.</p>
+            </a>
+
+            <!-- Progress Dashboard -->
+            <a href="/user-dashboard.html" class="action-card">
+                <div class="icon-box">👤</div>
+                <h3>My Progress</h3>
+                <p>View your personalized performance metrics, accuracy trends, and exercise history.</p>
+            </a>
+
+            <!-- Trainer Dashboard -->
+            <a href="/dashboard.html" class="action-card" id="trainerCard">
+                <div class="icon-box">📊</div>
+                <h3>Trainer Hub</h3>
+                <p>Manage gym usage, analyze posture error trends, and export management reports.</p>
+            </a>
+
+            <!-- Evaluation -->
+            <a href="/evaluation.html" class="action-card">
+                <div class="icon-box">💬</div>
+                <h3>System Survey</h3>
+                <p>Help us improve by participating in our Usability Evaluation research study.</p>
+            </a>
+        </div>
+    </main>
+
+    <div style="position:fixed; bottom: 80px; right: 24px;">
+        <button onclick="logout()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white; padding:8px 16px; border-radius:30px; cursor:pointer; font-weight:600;">Logout</button>
+    </div>
+
+    <div class="ticker">
+        <div class="ticker-item"><span id="totalSessions">—</span> Active Sessions</div>
+        <div class="ticker-item"><span id="avgAccuracy">—</span> Form Accuracy</div>
+        <div class="ticker-item"><span>LIVE</span> System Status: Online</div>
+    </div>
+
+    <script>
+        async function fetchLiveStats() {
+            try {
+                const r = await fetch('/api/analytics/summary');
+                const d = await r.json();
+                if (d.status === 'success') {
+                    document.getElementById('totalSessions').textContent = d.data.totalSessions;
+                    // Mocked average accuracy for landing page feel
+                    document.getElementById('avgAccuracy').textContent = '94.2%';
+                }
+            } catch (e) {
+                console.error("Failed to load ticker stats");
+            }
+        }
+        function updateUI() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user && user.name) {
+                const isFirst = (user.loginCount === 1);
+                const greeting = isFirst ? 'Welcome,' : 'Welcome back,';
+                document.getElementById('welcomeTitle').innerHTML = `${greeting}<br>${user.name}`;
+                document.getElementById('welcomeSub').textContent = isFirst 
+                    ? 'Begin your professional fitness journey with AI precision.'
+                    : 'Ready to beat your best form today?';
+            }
+        }
+        updateUI();
+        fetchLiveStats();
+        setInterval(fetchLiveStats, 30000);
+    </script>
+</body>
+</html>

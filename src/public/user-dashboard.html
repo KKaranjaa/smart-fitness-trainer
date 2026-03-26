@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Progress - Smart Fitness Trainer</title>
+    <link rel="stylesheet" href="/css/design-system.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) window.location.href = '/login.html';
+        })();
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
+    </script>
+    <style>
+        body {
+            background: var(--color-primary);
+            color: var(--color-text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: var(--color-surface);
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--color-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(2, 195, 154, 0.3);
+        }
+
+        .user-meta h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .level-badge {
+            background: rgba(2, 195, 154, 0.1);
+            color: var(--color-accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 25px;
+        }
+
+        .panel {
+            background: var(--color-surface);
+            border-radius: 15px;
+            border: 1px solid var(--color-border);
+            padding: 25px;
+            transition: transform 0.2s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+        }
+
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--color-accent);
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .chart-container {
+            height: 250px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding-top: 20px;
+            border-bottom: 2px solid var(--color-border);
+        }
+
+        .chart-bar {
+            width: 40px;
+            background: var(--color-accent);
+            border-radius: 5px 5px 0 0;
+            position: relative;
+            transition: height 1s ease;
+        }
+
+        .chart-bar:hover {
+            background: var(--color-accent-dark, #028090);
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .chart-label {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            color: var(--color-text-secondary);
+            text-align: center;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-item {
+            background: rgba(239, 68, 68, 0.05);
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .error-item h4 {
+            margin: 0 0 5px 0;
+            color: #ef4444;
+            font-size: 0.9rem;
+        }
+
+        .error-tip {
+            font-size: 0.8rem;
+            color: var(--color-text-secondary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        td {
+            padding: 15px 0;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.9rem;
+        }
+
+        .accuracy-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .acc-high { background: rgba(2, 195, 154, 0.1); color: var(--color-accent); }
+        .acc-med { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .acc-low { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        .back-link {
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover { color: var(--color-accent); }
+
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            .span-2 { grid-column: span 1; }
+            .span-3 { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <div class="user-avatar" id="userInitial">U</div>
+            <div class="user-meta">
+                <h1 id="userGreeting">Welcome, <span id="userName">User</span></h1>
+                <span class="level-badge" id="userLevel">Beginner</span>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/evaluation.html" class="nav-link" style="color: #6366f1; margin-left: 15px; margin-right: 15px;">💬 Give Feedback</a>
+            <a href="/scanner.html" class="nav-link">← Scanner</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Main Stats -->
+        <div class="panel stat-card">
+            <div class="stat-label">Total Reps</div>
+            <div class="stat-value" id="totalReps">0</div>
+        </div>
+        <div class="panel stat-card">
+            <div class="stat-label">Total Workouts</div>
+            <div class="stat-value" id="totalSessions">0</div>
+        </div>
+        <div class="panel stat-card">
+            <div class="stat-label">Avg Accuracy</div>
+            <div class="stat-value" id="avgAccuracy">0%</div>
+        </div>
+
+        <!-- Accuracy Trend -->
+        <div class="panel span-2">
+            <div class="section-title">📈 Form Accuracy Trend</div>
+            <div class="chart-container" id="accuracyChart">
+                <!-- Bars will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Improvement Tips -->
+        <div class="panel">
+            <div class="section-title">💡 Form Improvement</div>
+            <div id="errorTips">
+                <p style="color:var(--color-text-secondary); font-size: 0.9rem;">Keep practicing! Your form will improve with every session.</p>
+            </div>
+        </div>
+
+        <!-- Workout History -->
+        <div class="panel span-3">
+            <div class="section-title">🕒 Recent Activity</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Machine</th>
+                        <th>Date</th>
+                        <th>Reps</th>
+                        <th>Accuracy</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable">
+                    <!-- Rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function fetchUserData() {
+            const sessionUser = JSON.parse(localStorage.getItem('user'));
+            const userId = sessionUser ? sessionUser.userId : 'U001';
+            
+            try {
+                // Profile
+                const profR = await fetch(`/api/users/${userId}/profile`);
+                const profile = await profR.json();
+                if (profile.status === 'success') {
+                    const isFirst = (profile.data.loginCount === 1);
+                    document.getElementById('userGreeting').innerHTML = `${isFirst ? 'Welcome,' : 'Welcome back,'} <span id="userName">${profile.data.name}</span>`;
+                    document.getElementById('userLevel').textContent = profile.data.fitnessLevel || 'Beginner';
+                    document.getElementById('userInitial').textContent = profile.data.name.charAt(0);
+                }
+
+                // Fetch Stats
+                const statsRes = await fetch(`/api/users/${userId}/stats`);
+                const stats = await statsRes.json();
+                if (stats.status === 'success') {
+                    const data = stats.data;
+                    document.getElementById('totalReps').textContent = data.totalReps;
+                    document.getElementById('totalSessions').textContent = data.totalSessions;
+                    document.getElementById('avgAccuracy').textContent = data.avgAccuracy + '%';
+
+                    renderHistory(data.history);
+                    renderChart(data.history);
+                    renderTips(data.topErrors);
+                }
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+            }
+        }
+
+        function renderHistory(history) {
+            const table = document.getElementById('historyTable');
+            table.innerHTML = history.length ? history.map(s => {
+                const date = new Date(s.date).toLocaleDateString();
+                const accClass = s.accuracy > 85 ? 'acc-high' : s.accuracy > 65 ? 'acc-med' : 'acc-low';
+                return `
+                    <tr>
+                        <td><strong>${s.machine}</strong></td>
+                        <td>${date}</td>
+                        <td>${s.reps}</td>
+                        <td><span class="accuracy-pill ${accClass}">${s.accuracy}%</span></td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="4" style="text-align:center;">No sessions found. Go work out!</td></tr>';
+        }
+
+        function renderChart(history) {
+            const chart = document.getElementById('accuracyChart');
+            if (!history.length) {
+                chart.innerHTML = '<p style="color:var(--color-text-secondary);">Start your journey to see trends!</p>';
+                return;
+            }
+
+            // Show last 7 sessions in reverse order
+            const trend = [...history].reverse().slice(-7);
+            chart.innerHTML = trend.map(s => {
+                const height = s.accuracy < 10 ? 10 : s.accuracy;
+                return `
+                    <div class="bar-group">
+                        <div class="chart-bar" style="height: ${height * 2}px">
+                            <span class="bar-value">${s.accuracy}%</span>
+                        </div>
+                        <div class="chart-label">${new Date(s.date).toLocaleDateString([], {month:'short', day:'numeric'})}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const ERR_MAP = {
+            incorrect_back_angle: {
+                title: "Trunk Lean Detected",
+                tip: "Focus on keeping your chest up and core engaged. Imagine a string pulling your head toward the ceiling."
+            },
+            knee_overextension: {
+                title: "Knee Alignment Issue",
+                tip: "Make sure your knees track exactly over your toes. Avoid letting them buckle inward."
+            },
+            elbow_position: {
+                title: "Elbow Flare",
+                tip: "Keep your elbows slightly tucked or at a 45-degree angle. Avoid flaring them up above your shoulders."
+            },
+            hip_alignment: {
+                title: "Hip Tilt",
+                tip: "Press evenly through both legs. Use a mirror to ensure your hips stay level throughout the movement."
+            }
+        };
+
+        function renderTips(topErrors) {
+            const container = document.getElementById('errorTips');
+            if (!topErrors.length) return;
+
+            container.innerHTML = topErrors.map(e => {
+                const info = ERR_MAP[e.type] || { title: e.type, tip: "Listen to the AI's real-time advice during your next session." };
+                return `
+                    <div class="error-item">
+                        <h4>${info.title}</h4>
+                        <div class="error-tip">${info.tip}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.onload = fetchUserData;
+    </script>
+</body>
+</html>
