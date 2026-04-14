@@ -17,96 +17,191 @@
         }
     </script>
     <style>
+        :root {
+            --color-primary: #0f172a;
+            --color-surface: #1e293b;
+            --color-elevated: #334155;
+            --color-accent: #02C39A;
+            --color-border: rgba(255,255,255,0.08);
+            --color-text-primary: #f8fafc;
+            --color-text-secondary: #94a3b8;
+        }
+
         body {
             background: var(--color-primary);
             color: var(--color-text-primary);
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 24px;
+            padding: 16px;
             display: flex;
             justify-content: center;
         }
 
         .container {
-            max-width: 700px;
+            max-width: 800px;
             width: 100%;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 3rem;
+            margin-top: 40px;
         }
 
         .header h1 {
-            font-size: 1.5rem;
+            font-size: clamp(1.4rem, 5vw, 2rem);
             margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #02C39A, #028090);
+            font-weight: 800;
+            background: linear-gradient(135deg, #02C39A, #3b82f6);
             background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .nav-home {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
         .header p {
             color: var(--color-text-secondary);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            max-width: 500px;
+            margin: 0 auto;
         }
+
+        .nav-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 6px 16px;
+            background: var(--color-surface);
+            border-radius: 20px;
+            border: 1px solid var(--color-border);
+            transition: all 0.2s;
+        }
+        .nav-home:hover { border-color: var(--color-accent); color: white; }
 
         .card {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
-            border-radius: 16px;
+            border-radius: 24px;
             padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
         }
 
+        @media (min-width: 640px) {
+            .card { padding: 3rem; }
+        }
+
+        .section-title {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        /* Demographic Grid */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 3rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        select, input[type="text"], textarea {
+            width: 100%;
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        select:focus, textarea:focus { border-color: var(--color-accent); }
+
+        .gender-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .gender-option {
+            flex: 1;
+            min-width: 100px;
+        }
+        .gender-option input { display: none; }
+        .gender-option label {
+            display: block;
+            padding: 10px;
+            background: var(--color-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .gender-option input:checked + label {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+            color: white;
+        }
+
+        /* Likert Scale Styles */
         .question-group {
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .question-text {
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             display: block;
             color: var(--color-text-primary);
+            font-size: 0.95rem;
+            line-height: 1.6;
         }
 
         .likert-scale {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
         }
 
-        .likert-option {
-            flex: 1;
-            text-align: center;
-        }
-
-        .likert-option input {
-            display: none;
-        }
-
+        .likert-option { flex: 1; text-align: center; }
+        .likert-option input { display: none; }
         .likert-option label {
             display: block;
-            padding: 10px;
+            padding: 12px 5px;
             background: var(--color-elevated);
             border: 1px solid var(--color-border);
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.85rem;
+            font-weight: 700;
             transition: all 0.2s;
+        }
+
+        @media (max-width: 480px) {
+            .likert-scale { flex-direction: column; align-items: stretch; }
+            .likert-option label { display: flex; justify-content: space-between; padding: 14px 20px; }
+            .likert-option label::after { content: attr(data-label); font-weight: 400; font-size: 0.75rem; opacity: 0.7; }
         }
 
         .likert-option input:checked + label {
@@ -114,150 +209,260 @@
             color: white;
             border-color: var(--color-accent);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(2, 195, 154, 0.3);
+            box-shadow: 0 4px 15px rgba(2, 195, 154, 0.3);
         }
 
         .scale-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--color-text-secondary);
-            margin-top: 5px;
+            margin-top: 10px;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+        @media (max-width: 480px) { .scale-labels { display: none; } }
 
-        .textarea-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        textarea {
-            width: 100%;
-            background: var(--color-elevated);
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            padding: 1rem;
-            color: white;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
-        }
+        .textarea-group { margin-bottom: 2rem; }
+        .textarea-group label { margin-bottom: 12px; display: block; font-weight: 600; font-size: 0.95rem; }
+        textarea { min-height: 100px; resize: vertical; }
 
         .submit-btn {
             width: 100%;
             background: linear-gradient(135deg, #02C39A, #028090);
             color: white;
             border: none;
-            padding: 1rem;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
+            padding: 1.2rem;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 800;
             cursor: pointer;
-            margin-top: 2rem;
-            transition: opacity 0.2s;
+            margin-top: 1rem;
+            transition: all 0.2s;
+            box-shadow: 0 10px 30px rgba(2, 195, 154, 0.3);
         }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 15px 40px rgba(2, 195, 154, 0.4); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .submit-btn:hover { opacity: 0.9; }
-
-        .success-overlay {
-            display: none;
-            text-align: center;
-            padding: 3rem;
-        }
-
-        .success-overlay h2 { color: #02C39A; }
+        .success-overlay { display: none; text-align: center; padding: 4rem 2rem; }
+        .success-overlay h2 { color: var(--color-accent); font-size: 2rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
-    <a href="/" class="nav-home">Home</a>
+    <a href="/" class="nav-home">← Back to Dashboard</a>
+    
     <div class="container">
-        <div class="header">
-            <h1>Usability Evaluation</h1>
-            <p>Your feedback helps us improve the Smart Fitness Trainer experience.</p>
-        </div>
+        <header class="header">
+            <h1>Appendix II: User Study</h1>
+            <p>Project: Smart Fitness Trainer with Pose Recognition<br>Researcher: Eugene Mogare</p>
+        </header>
 
         <div class="card" id="formCard">
             <form id="evalForm">
-                <!-- Ease of Use -->
+                
+                <!-- Section A: Demographics -->
+                <span class="section-title">Section A: Demographics</span>
+                <div class="demo-grid">
+                    <div class="form-group">
+                        <label>1. Age Range</label>
+                        <select id="age" required>
+                            <option value="">Select Range</option>
+                            <option value="Below 18">Below 18</option>
+                            <option value="18–25">18–25</option>
+                            <option value="26–35">26–35</option>
+                            <option value="36–45">36–45</option>
+                            <option value="Above 45">Above 45</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>2. Gender</label>
+                        <div class="gender-options">
+                            <div class="gender-option">
+                                <input type="radio" name="gender" value="Male" id="g_male" required>
+                                <label for="g_male">Male</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" name="gender" value="Female" id="g_female">
+                                <label for="g_female">Female</label>
+                            </div>
+                            <div class="gender-option">
+                                <input type="radio" name="gender" value="Other" id="g_other">
+                                <label for="g_other">Other</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>3. Fitness Level</label>
+                        <select id="fitnessLevel" required>
+                            <option value="">Select Level</option>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>4. Gym Attendance</label>
+                        <select id="gymAttendance" required>
+                            <option value="">Select Frequency</option>
+                            <option value="Rarely">Rarely</option>
+                            <option value="1–2x per week">1–2x per week</option>
+                            <option value="3–4x per week">3–4x per week</option>
+                            <option value="5+ per week">5+ per week</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section B: Usability -->
+                <span class="section-title">Section B: Usability</span>
+                
                 <div class="question-group">
-                    <span class="question-text">1. The system interface was intuitive and easy to navigate.</span>
+                    <span class="question-text">5. The AR demonstration was easy to understand.</span>
                     <div class="likert-scale">
-                        <div class="likert-option"><input type="radio" name="easeOfUse" value="1" id="e1" required><label for="e1">1</label></div>
-                        <div class="likert-option"><input type="radio" name="easeOfUse" value="2" id="e2"><label for="e2">2</label></div>
-                        <div class="likert-option"><input type="radio" name="easeOfUse" value="3" id="e3"><label for="e3">3</label></div>
-                        <div class="likert-option"><input type="radio" name="easeOfUse" value="4" id="e4"><label for="e4">4</label></div>
-                        <div class="likert-option"><input type="radio" name="easeOfUse" value="5" id="e5"><label for="e5">5</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUnderstanding" value="1" id="q5_1" required><label for="q5_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUnderstanding" value="2" id="q5_2"><label for="q5_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUnderstanding" value="3" id="q5_3"><label for="q5_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUnderstanding" value="4" id="q5_4"><label for="q5_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="easeOfUnderstanding" value="5" id="q5_5"><label for="q5_5" data-label="SA">5</label></div>
                     </div>
                     <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
                 </div>
 
-                <!-- Pose Accuracy -->
                 <div class="question-group">
-                    <span class="question-text">2. The AI pose detection accurately captured my movements during exercise.</span>
+                    <span class="question-text">6. The QR system was convenient.</span>
                     <div class="likert-scale">
-                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="1" id="p1" required><label for="p1">1</label></div>
-                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="2" id="p2"><label for="p2">2</label></div>
-                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="3" id="p3"><label for="p3">3</label></div>
-                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="4" id="p4"><label for="p4">4</label></div>
-                        <div class="likert-option"><input type="radio" name="poseAccuracy" value="5" id="p5"><label for="p5">5</label></div>
+                        <div class="likert-option"><input type="radio" name="qrConvenience" value="1" id="q6_1" required><label for="q6_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="qrConvenience" value="2" id="q6_2"><label for="q6_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="qrConvenience" value="3" id="q6_3"><label for="q6_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="qrConvenience" value="4" id="q6_4"><label for="q6_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="qrConvenience" value="5" id="q6_5"><label for="q6_5" data-label="SA">5</label></div>
                     </div>
                     <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
                 </div>
 
-                <!-- Visual Quality -->
                 <div class="question-group">
-                    <span class="question-text">3. The 3D AR workout demonstrations were clear and helpful.</span>
+                    <span class="question-text">7. The AR interface was straightforward.</span>
                     <div class="likert-scale">
-                        <div class="likert-option"><input type="radio" name="visualQuality" value="1" id="v1" required><label for="v1">1</label></div>
-                        <div class="likert-option"><input type="radio" name="visualQuality" value="2" id="v2"><label for="v2">2</label></div>
-                        <div class="likert-option"><input type="radio" name="visualQuality" value="3" id="v3"><label for="v3">3</label></div>
-                        <div class="likert-option"><input type="radio" name="visualQuality" value="4" id="v4"><label for="v4">4</label></div>
-                        <div class="likert-option"><input type="radio" name="visualQuality" value="5" id="v5"><label for="v5">5</label></div>
+                        <div class="likert-option"><input type="radio" name="interfaceStraightforward" value="1" id="q7_1" required><label for="q7_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="interfaceStraightforward" value="2" id="q7_2"><label for="q7_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="interfaceStraightforward" value="3" id="q7_3"><label for="q7_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="interfaceStraightforward" value="4" id="q7_4"><label for="q7_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="interfaceStraightforward" value="5" id="q7_5"><label for="q7_5" data-label="SA">5</label></div>
                     </div>
                     <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
                 </div>
 
-                <!-- Dashboard Utility -->
+                <!-- Section C: Pose Detection -->
+                <span class="section-title">Section C: Pose Detection</span>
+
                 <div class="question-group">
-                    <span class="question-text">4. The analytics dashboard provides actionable insights into my progress.</span>
+                    <span class="question-text">8. The system accurately detected my posture.</span>
                     <div class="likert-scale">
-                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="1" id="d1" required><label for="d1">1</label></div>
-                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="2" id="d2"><label for="d2">2</label></div>
-                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="3" id="d3"><label for="d3">3</label></div>
-                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="4" id="d4"><label for="d4">4</label></div>
-                        <div class="likert-option"><input type="radio" name="dashboardUtility" value="5" id="d5"><label for="d5">5</label></div>
+                        <div class="likert-option"><input type="radio" name="accuracyDetection" value="1" id="q8_1" required><label for="q8_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="accuracyDetection" value="2" id="q8_2"><label for="q8_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="accuracyDetection" value="3" id="q8_3"><label for="q8_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="accuracyDetection" value="4" id="q8_4"><label for="q8_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="accuracyDetection" value="5" id="q8_5"><label for="q8_5" data-label="SA">5</label></div>
                     </div>
                     <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
                 </div>
 
-                <!-- Overall Satisfaction -->
                 <div class="question-group">
-                    <span class="question-text">5. Overall, I am satisfied with the Smart Fitness Trainer app.</span>
+                    <span class="question-text">9. The feedback improved my form.</span>
                     <div class="likert-scale">
-                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="1" id="s1" required><label for="s1">1</label></div>
-                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="2" id="s2"><label for="s2">2</label></div>
-                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="3" id="s3"><label for="s3">3</label></div>
-                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="4" id="s4"><label for="s4">4</label></div>
-                        <div class="likert-option"><input type="radio" name="overallSatisfaction" value="5" id="s5"><label for="s5">5</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackImprovement" value="1" id="q9_1" required><label for="q9_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackImprovement" value="2" id="q9_2"><label for="q9_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackImprovement" value="3" id="q9_3"><label for="q9_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackImprovement" value="4" id="q9_4"><label for="q9_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackImprovement" value="5" id="q9_5"><label for="q9_5" data-label="SA">5</label></div>
                     </div>
                     <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <div class="question-group">
+                    <span class="question-text">10. Feedback was easy to interpret.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="feedbackInterpretation" value="1" id="q10_1" required><label for="q10_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackInterpretation" value="2" id="q10_2"><label for="q10_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackInterpretation" value="3" id="q10_3"><label for="q10_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackInterpretation" value="4" id="q10_4"><label for="q10_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="feedbackInterpretation" value="5" id="q10_5"><label for="q10_5" data-label="SA">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Section D: System Experience -->
+                <span class="section-title">Section D: System Experience</span>
+
+                <div class="question-group">
+                    <span class="question-text">11. The system was responsive.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="responsiveness" value="1" id="q11_1" required><label for="q11_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="responsiveness" value="2" id="q11_2"><label for="q11_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="responsiveness" value="3" id="q11_3"><label for="q11_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="responsiveness" value="4" id="q11_4"><label for="q11_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="responsiveness" value="5" id="q11_5"><label for="q11_5" data-label="SA">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <div class="question-group">
+                    <span class="question-text">12. I would use it regularly.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="regularUse" value="1" id="q12_1" required><label for="q12_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="regularUse" value="2" id="q12_2"><label for="q12_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="regularUse" value="3" id="q12_3"><label for="q12_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="regularUse" value="4" id="q12_4"><label for="q12_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="regularUse" value="5" id="q12_5"><label for="q12_5" data-label="SA">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <div class="question-group">
+                    <span class="question-text">13. It increased my confidence.</span>
+                    <div class="likert-scale">
+                        <div class="likert-option"><input type="radio" name="increasedConfidence" value="1" id="q13_1" required><label for="q13_1" data-label="SD">1</label></div>
+                        <div class="likert-option"><input type="radio" name="increasedConfidence" value="2" id="q13_2"><label for="q13_2" data-label="D">2</label></div>
+                        <div class="likert-option"><input type="radio" name="increasedConfidence" value="3" id="q13_3"><label for="q13_3" data-label="N">3</label></div>
+                        <div class="likert-option"><input type="radio" name="increasedConfidence" value="4" id="q13_4"><label for="q13_4" data-label="A">4</label></div>
+                        <div class="likert-option"><input type="radio" name="increasedConfidence" value="5" id="q13_5"><label for="q13_5" data-label="SA">5</label></div>
+                    </div>
+                    <div class="scale-labels"><span>Strongly Disagree</span><span>Strongly Agree</span></div>
+                </div>
+
+                <!-- Section E: Suggestions -->
+                <span class="section-title">Section E: Suggestions</span>
+
+                <div class="textarea-group">
+                    <label>14. What did you like most?</label>
+                    <textarea id="likedMost" placeholder="Tell us your favorite features..."></textarea>
                 </div>
 
                 <div class="textarea-group">
-                    <label>Suggestions for Improvement</label>
-                    <textarea id="comments" placeholder="What can we do better?"></textarea>
+                    <label>15. What improvements do you recommend?</label>
+                    <textarea id="improvements" placeholder="Any suggestions for future versions?"></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn" id="submitBtn">Submit Feedback</button>
+                <!-- Anonymous Toggle -->
+                <div style="display:flex; align-items:center; gap:14px; margin-top:1.5rem; padding:1.5rem; background:rgba(255,255,255,0.03); border:1px solid var(--color-border); border-radius:16px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:700; font-size:0.95rem;">Submit Anonymously</div>
+                        <div style="font-size:0.8rem; color:var(--color-text-secondary); margin-top:2px;">Your personal details will not be linked to these responses.</div>
+                    </div>
+                    <input type="checkbox" id="anonToggle" style="width:24px; height:24px; accent-color:var(--color-accent); cursor:pointer;">
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Submit Research Data</button>
             </form>
         </div>
 
         <div class="card success-overlay" id="successCard">
-            <h2>🎉 Thank You!</h2>
-            <p>Your response has been recorded successfully.</p>
-            <button class="submit-btn" onclick="window.location.href='/scanner.html'">Back to Home</button>
+            <h2>🎉 Data Recorded</h2>
+            <p>Thank you for contributing to Eugene Mogare's research study.</p>
+            <button class="submit-btn" onclick="window.location.href='/'">Return to Home</button>
         </div>
     </div>
 
@@ -267,19 +472,33 @@
             e.preventDefault();
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Submitting...';
+            submitBtn.textContent = 'Uploading...';
 
-            const sessionUser = JSON.parse(localStorage.getItem('user'));
+            const user = JSON.parse(localStorage.getItem('user'));
             const payload = {
-                userId: sessionUser ? sessionUser.userId : 'U001',
-                responses: {
-                    easeOfUse: parseInt(form.easeOfUse.value),
-                    poseAccuracy: parseInt(form.poseAccuracy.value),
-                    visualQuality: parseInt(form.visualQuality.value),
-                    dashboardUtility: parseInt(form.dashboardUtility.value),
-                    overallSatisfaction: parseInt(form.overallSatisfaction.value)
+                userId: user.userId,
+                isAnonymous: document.getElementById('anonToggle').checked,
+                demographics: {
+                    age: document.getElementById('age').value,
+                    gender: form.querySelector('input[name="gender"]:checked').value,
+                    fitnessLevel: document.getElementById('fitnessLevel').value,
+                    gymAttendance: document.getElementById('gymAttendance').value
                 },
-                comments: document.getElementById('comments').value
+                responses: {
+                    easeOfUnderstanding: parseInt(form.easeOfUnderstanding.value),
+                    qrConvenience: parseInt(form.qrConvenience.value),
+                    interfaceStraightforward: parseInt(form.interfaceStraightforward.value),
+                    accuracyDetection: parseInt(form.accuracyDetection.value),
+                    feedbackImprovement: parseInt(form.feedbackImprovement.value),
+                    feedbackInterpretation: parseInt(form.feedbackInterpretation.value),
+                    responsiveness: parseInt(form.responsiveness.value),
+                    regularUse: parseInt(form.regularUse.value),
+                    increasedConfidence: parseInt(form.increasedConfidence.value)
+                },
+                comments: {
+                    likedMost: document.getElementById('likedMost').value,
+                    improvements: document.getElementById('improvements').value
+                }
             };
 
             try {
@@ -293,14 +512,14 @@
                     document.getElementById('formCard').style.display = 'none';
                     document.getElementById('successCard').style.display = 'block';
                 } else {
-                    alert('Submission failed. Please try again.');
+                    alert('Submission failed. Please check your connection.');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = 'Submit Feedback';
+                    submitBtn.textContent = 'Submit Research Data';
                 }
             } catch (err) {
-                alert('Connection error.');
+                alert('Server error. Please try again later.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Submit Feedback';
+                submitBtn.textContent = 'Submit Research Data';
             }
         });
     </script>

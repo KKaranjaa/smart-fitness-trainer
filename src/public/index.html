@@ -39,16 +39,43 @@
             overflow-x: hidden;
         }
 
+        .top-nav {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: flex-end;
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
         /* ── Hero Section ── */
         .hero {
-            padding: 80px 24px;
+            padding: 100px 24px 60px;
             text-align: center;
             max-width: 900px;
             margin: 0 auto;
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-size: clamp(2.2rem, 8vw, 4.5rem);
             font-weight: 800;
             line-height: 1.1;
             margin-bottom: 20px;
@@ -60,7 +87,7 @@
         }
 
         .hero p {
-            font-size: 1.25rem;
+            font-size: clamp(1rem, 4vw, 1.25rem);
             color: rgba(255, 255, 255, 0.7);
             max-width: 600px;
             margin: 0 auto 40px;
@@ -83,7 +110,7 @@
             border: 1px solid var(--glass-border);
             backdrop-filter: var(--glass-blur);
             border-radius: 24px;
-            padding: 40px 30px;
+            padding: 30px;
             text-decoration: none;
             color: inherit;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -92,6 +119,10 @@
             gap: 20px;
             position: relative;
             overflow: hidden;
+        }
+
+        @media (min-width: 768px) {
+            .action-card { padding: 40px 30px; }
         }
 
         .action-card:hover {
@@ -172,6 +203,10 @@
 </head>
 <body>
 
+    <div class="top-nav">
+        <a href="#" class="logout-btn" onclick="logout()">Logout</a>
+    </div>
+
     <main>
         <div class="hero">
             <h1 id="welcomeTitle">Elevate Your Training<br>With AI Precision.</h1>
@@ -215,6 +250,14 @@
                 <h3>System Survey</h3>
                 <p>Help us improve by participating in our Usability Evaluation research study.</p>
             </a>
+
+            <!-- Messages — hidden for trainer -->
+            <a href="/messages.html" class="action-card" id="messagesCard" style="display:none; position:relative;">
+                <div class="icon-box" style="background:rgba(59,130,246,0.12);">✉️</div>
+                <h3>Messages</h3>
+                <p>Chat with your trainer. Get personal tips, motivation and check-ins directly.</p>
+                <span id="homeMsgBadge" style="display:none; position:absolute; top:18px; right:18px; background:#ef4444; color:white; border-radius:50%; min-width:22px; height:22px; font-size:0.7rem; font-weight:800; align-items:center; justify-content:center; padding:0 4px;">0</span>
+            </a>
         </div>
     </main>
 
@@ -235,27 +278,46 @@
                 const d = await r.json();
                 if (d.status === 'success') {
                     document.getElementById('totalSessions').textContent = d.data.totalSessions;
-                    // Mocked average accuracy for landing page feel
                     document.getElementById('avgAccuracy').textContent = '94.2%';
                 }
-            } catch (e) {
-                console.error("Failed to load ticker stats");
-            }
+            } catch (e) { console.error("Failed to load ticker stats"); }
         }
+
         function updateUI() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (user && user.name) {
                 const isFirst = (user.loginCount === 1);
                 const greeting = isFirst ? 'Welcome,' : 'Welcome back,';
                 document.getElementById('welcomeTitle').innerHTML = `${greeting}<br>${user.name}`;
-                document.getElementById('welcomeSub').textContent = isFirst 
+                document.getElementById('welcomeSub').textContent = isFirst
                     ? 'Begin your professional fitness journey with AI precision.'
                     : 'Ready to beat your best form today?';
+
+                // Show Messages card for members only
+                if (user.role !== 'trainer') {
+                    document.getElementById('messagesCard').style.display = 'flex';
+                    fetchUnreadCount(user.userId);
+                }
             }
         }
+
+        async function fetchUnreadCount(userId) {
+            try {
+                const r = await fetch('/api/messages/' + userId);
+                const d = await r.json();
+                const unread = (d.data || []).filter(m => !m.read && m.fromRole !== 'member').length;
+                const badge = document.getElementById('homeMsgBadge');
+                if (unread > 0) {
+                    badge.textContent = unread;
+                    badge.style.display = 'flex';
+                }
+            } catch(e) {}
+        }
+
         updateUI();
         fetchLiveStats();
         setInterval(fetchLiveStats, 30000);
     </script>
 </body>
 </html>
+

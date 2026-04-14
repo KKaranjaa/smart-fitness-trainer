@@ -25,6 +25,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   loginCount: { type: Number, default: 0 },
   fitnessGoals: { type: String },
   assignedTrainer: { type: String, default: 'Eugene Mogare' },

@@ -306,6 +306,21 @@
             text-align: center;
         }
     </style>
+    <style>
+        /* Responsive Overrides */
+        @media (max-width: 1023px) {
+            .main-container { grid-template-columns: 1fr; padding: var(--space-4); margin-top: 10px; }
+            .ar-viewer-container { aspect-ratio: 4/3; height: auto !important; min-height: 250px; }
+            .col-right .panel { position: static !important; margin-top: var(--space-4); }
+            .machine-title { font-size: 1.5rem; }
+            .ar-controls { padding: 6px 12px; font-size: 0.8rem; border-radius: 20px; max-width: 95%; }
+            .control-btn { padding: 4px 8px; font-size: 10px; }
+        }
+        @media (min-width: 1024px) {
+            .main-container { grid-template-columns: 1fr 380px; gap: 40px; }
+            .ar-viewer-container { height: 500px !important; aspect-ratio: 16/9; }
+        }
+    </style>
 </head>
 
 <body>
@@ -597,14 +612,27 @@
             const wrapper = document.getElementById('modelWrapper');
             wrapper.innerHTML = ''; // clear
 
-            // Realistic colors
-            const colorSkin = "#E0B696";
-            const colorShirt = "#10B981"; 
-            const colorPants = "#2C3E50";
-            const colorShoes = "#1A1A1A";
-            const colorMachineFrame = "#374151";
-            const colorMachineAccent = "#3B82F6";
-            const colorMachineWeight = "#DC2626";
+            // Premium AI Mannequin Aesthetic (Holographic/Sci-Fi)
+            const colorSkin = "#E2E8F0"; // Sleek metallic white
+            const colorShirt = "#94A3B8"; // Metallic silver
+            const colorPants = "#475569"; // Dark steel
+            const colorShoes = "#1E293B"; // Almost black
+            const colorMachineFrame = "#0F172A"; // Deep slate
+            const colorMachineAccent = "#3B82F6"; // Neon blue
+            const colorMachineWeight = "#334155";
+            
+            // Shared Studio Environment (Lighting + High-tech floor)
+            const envHtml = `
+                <!-- Studio Lighting -->
+                <a-entity light="type: ambient; color: #ffffff; intensity: 0.4"></a-entity>
+                <a-entity light="type: directional; color: #ffffff; intensity: 0.8; castShadow: true" position="-2 4 2"></a-entity>
+                <a-entity light="type: point; color: #3B82F6; intensity: 0.6; distance: 5" position="2 1.5 -1"></a-entity>
+                
+                <!-- Holographic Grid Floor -->
+                <a-plane rotation="-90 0 0" width="10" height="10" color="#020617" shadow="receive: true"></a-plane>
+                <a-grid rotation="-90 0 0" src="" width="10" height="10" 
+                        material="color: #3B82F6; opacity: 0.2; transparent: true"></a-grid>
+            `;
 
             const SCENE_DUR = 2000 / animationSpeed;
 
@@ -666,6 +694,7 @@
                         } else if (id === 'M002') { // Leg Press
                 const scene = document.createElement('a-entity');
                 scene.innerHTML = `
+                    ${envHtml}
                     <a-entity position="0 0.1 0">
                         <a-box position="0 0 0" width="0.8" height="0.1" depth="2.0" color="${colorMachineFrame}" shadow="cast:true; receive:true"></a-box>
                         <a-entity position="0 0.4 -0.5">
@@ -675,16 +704,19 @@
                         <a-box position="-0.4 0.6 0.6" width="0.05" height="0.05" depth="1.5" color="${colorMachineFrame}" rotation="45 0 0"></a-box>
                         <a-box position="0.4 0.6 0.6" width="0.05" height="0.05" depth="1.5" color="${colorMachineFrame}" rotation="45 0 0"></a-box>
                         <a-entity position="0 0.8 0.5" animation="property: position; from: 0 0.5 0.2; to: 0 1.0 0.7; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
-                            <a-box position="0 0 0" width="0.7" height="0.5" depth="0.05" color="#222" rotation="45 0 0"></a-box>
+                            <a-box position="0 0 0" width="0.7" height="0.5" depth="0.05" color="#222" rotation="45 0 0" material="metalness: 0.4"></a-box>
                             <a-cylinder position="-0.45 0 0" radius="0.15" height="0.1" color="${colorMachineWeight}" rotation="0 0 90"></a-cylinder>
                             <a-cylinder position="0.45 0 0" radius="0.15" height="0.1" color="${colorMachineWeight}" rotation="0 0 90"></a-cylinder>
                         </a-entity>
                     </a-entity>
                     <a-entity id="exerciser" position="0 0.5 -0.4">
                         <a-entity position="0 0.2 0" rotation="45 0 0">
-                            <a-box position="0 0.15 -0.1" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" shadow="cast:true"></a-box>
+                            <!-- Smooth Torso -->
+                            <a-cylinder position="0 0.15 -0.1" radius="0.16" height="0.55" color="${colorShirt}" shadow="cast:true"></a-cylinder>
                             <a-cylinder position="0 0.45 -0.1" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
-                            <a-sphere position="0 0.6 -0.1" radius="0.12" color="${colorSkin}" rotation="-45 0 0"></a-sphere>
+                            <!-- Advanced Head -->
+                            <a-sphere position="0 0.65 -0.1" radius="0.1" color="${colorSkin}" rotation="-45 0 0" shadow="cast:true" material="roughness:0.4"></a-sphere>
+                            <a-box position="0 0.65 0" width="0.14" height="0.04" depth="0.05" color="#0F172A" rotation="-45 0 0"></a-box>
                             <a-entity position="-0.25 0.2 -0.1" rotation="0 0 20">
                                 <a-cylinder position="0 -0.15 0" radius="0.04" height="0.35" color="${colorSkin}"></a-cylinder>
                                 <a-cylinder position="0 -0.4 0.15" radius="0.035" height="0.35" color="${colorSkin}" rotation="-40 0 0"></a-cylinder>
@@ -717,6 +749,7 @@
             } else if (id === 'M003') { // Chest Press
                 const scene = document.createElement('a-entity');
                 scene.innerHTML = `
+                    ${envHtml}
                     <a-entity position="0 0 0">
                         <a-box position="0 0.05 0" width="0.8" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
                         <a-box position="0 0.4 0.2" width="0.4" height="0.08" depth="0.4" color="${colorMachineAccent}" shadow="receive:true; cast:true"></a-box>
@@ -732,9 +765,11 @@
                         </a-entity>
                     </a-entity>
                     <a-entity position="0 0.45 0.1">
-                        <a-sphere position="0 0.85 0" radius="0.12" color="${colorSkin}" shadow="cast:true"></a-sphere>
-                        <a-cylinder position="0 0.73 -0.02" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
-                        <a-box position="0 0.45 -0.05" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" rotation="10 0 0" shadow="cast:true"></a-box>
+                        <a-sphere position="0 0.85 0" radius="0.1" color="${colorSkin}" shadow="cast:true" material="roughness:0.4"></a-sphere>
+                        <a-box position="0 0.85 0.08" width="0.14" height="0.04" depth="0.05" color="#0F172A"></a-box>
+                        
+                        <a-cylinder position="0 0.73 -0.02" radius="0.025" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-cylinder position="0 0.45 -0.05" radius="0.16" height="0.55" color="${colorShirt}" rotation="10 0 0" shadow="cast:true"></a-cylinder>
                         <a-entity position="-0.15 0.15 0.15">
                             <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
                             <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
@@ -766,6 +801,7 @@
             } else if (id === 'M004') { // Lat Pulldown
                 const scene = document.createElement('a-entity');
                 scene.innerHTML = `
+                    ${envHtml}
                     <a-entity position="0 0 0">
                         <a-box position="0 0.05 0" width="0.8" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
                         <a-box position="0 0.5 0.2" width="0.4" height="0.08" depth="0.4" color="${colorMachineAccent}"></a-box>
@@ -774,11 +810,9 @@
                         <a-box position="0 2.4 0" width="0.1" height="0.1" depth="0.8" color="${colorMachineFrame}"></a-box>
                         <a-entity position="0 2.1 0.4" animation="property: position; from: 0 2.1 0.4; to: 0 1.4 0.4; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
                         <!-- Moving Cable and Bar -->
-                        <!-- Start at 1.85 height, pull down to 1.3 -->
                         <a-entity position="0 1.85 0.35" animation="property: position; from: 0 1.85 0.35; to: 0 1.3 0.35; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine">
-                            <a-cylinder position="0 0.25 0" radius="0.01" height="0.5" color="#aaa"></a-cylinder> <!-- Cable -->
-                            <a-cylinder position="0 0 0" radius="0.02" height="1.2" color="#eee" rotation="0 0 90"></a-cylinder> <!-- Wide bar -->
-                            <!-- Grips -->
+                            <a-cylinder position="0 0.25 0" radius="0.01" height="0.5" color="#aaa"></a-cylinder>
+                            <a-cylinder position="0 0 0" radius="0.02" height="1.2" color="#eee" rotation="0 0 90"></a-cylinder>
                             <a-cylinder position="-0.5 0 0" radius="0.025" height="0.2" color="#111" rotation="0 0 90"></a-cylinder>
                             <a-cylinder position="0.5 0 0" radius="0.025" height="0.2" color="#111" rotation="0 0 90"></a-cylinder>
                         </a-entity>
@@ -788,9 +822,11 @@
                                animation="property: position; from: 0 0.6 -0.4; to: 0 1.15 -0.4; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-box>
                     </a-entity>
                     <a-entity position="0 0.55 0.1">
-                        <a-sphere position="0 0.8 0" radius="0.12" color="${colorSkin}" shadow="cast:true" animation="property: rotation; from: -10 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true"></a-sphere>
-                        <a-cylinder position="0 0.68 -0.02" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
-                        <a-box position="0 0.38 -0.05" width="0.45" height="0.55" depth="0.2" color="${colorShirt}" shadow="cast:true" animation="property: rotation; from: -5 0 0; to: -15 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-box>
+                        <a-sphere position="0 0.8 0" radius="0.1" color="${colorSkin}" shadow="cast:true" material="roughness:0.4" animation="property: rotation; from: -10 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true"></a-sphere>
+                        <a-box position="0 0.8 0.08" width="0.14" height="0.04" depth="0.05" color="#0F172A" animation="property: rotation; from: -10 0 0; to: 10 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true"></a-box>
+                        
+                        <a-cylinder position="0 0.68 -0.02" radius="0.025" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-cylinder position="0 0.38 -0.05" radius="0.16" height="0.55" color="${colorShirt}" shadow="cast:true" animation="property: rotation; from: -5 0 0; to: -15 0 0; dur: ${SCENE_DUR}; dir: alternate; loop: true; easing: easeInOutSine"></a-cylinder>
                         <a-entity position="-0.12 0.05 0.1">
                             <a-cylinder position="0 0 0.15" radius="0.07" height="0.35" color="${colorPants}" rotation="90 0 0"></a-cylinder>
                             <a-cylinder position="0 -0.2 0.3" radius="0.06" height="0.4" color="${colorPants}"></a-cylinder>
@@ -823,6 +859,7 @@
             } else if (id === 'M005') { // Stationary Bike
                 const scene = document.createElement('a-entity');
                 scene.innerHTML = `
+                    ${envHtml}
                     <!-- Machine -->
                     <a-entity id="bike" position="0 0.1 0">
                         <a-box position="0 0 0" width="0.4" height="0.1" depth="1.2" color="${colorMachineFrame}" shadow="receive:true; cast:true"></a-box>
@@ -832,7 +869,7 @@
                         <a-box position="0 0.95 -0.4" width="0.3" height="0.1" depth="0.3" color="${colorMachineAccent}"></a-box>
                         
                         <!-- Flywheel -->
-                        <a-cylinder position="0 0.4 0.3" radius="0.3" height="0.1" color="#888" rotation="0 0 90"></a-cylinder>
+                        <a-cylinder position="0 0.4 0.3" radius="0.3" height="0.1" color="#888" rotation="0 0 90" material="metalness:0.8"></a-cylinder>
 
                         <!-- Crank & Pedals moved backward -->
                         <a-entity position="0 0.4 -0.1" animation="property: rotation; from: 0 0 0; to: -360 0 0; dur: ${SCENE_DUR}; loop: true; easing: linear">
@@ -847,9 +884,11 @@
                         </a-entity>
                     </a-entity>
                     <a-entity position="0 1.05 -0.35">
-                        <a-sphere position="0 0.6 0.35" radius="0.12" color="${colorSkin}" shadow="cast:true" rotation="-20 0 0"></a-sphere>
-                        <a-cylinder position="0 0.48 0.35" radius="0.03" height="0.1" color="${colorSkin}"></a-cylinder>
-                        <a-box position="0 0.3 0.15" width="0.4" height="0.5" depth="0.2" color="${colorShirt}" rotation="40 0 0" shadow="cast:true"></a-box>
+                        <a-sphere position="0 0.6 0.35" radius="0.1" color="${colorSkin}" shadow="cast:true" rotation="-20 0 0" material="roughness:0.4"></a-sphere>
+                        <a-box position="0 0.6 0.43" width="0.14" height="0.04" depth="0.05" color="#0F172A" rotation="-20 0 0"></a-box>
+                        
+                        <a-cylinder position="0 0.48 0.35" radius="0.025" height="0.1" color="${colorSkin}"></a-cylinder>
+                        <a-cylinder position="0 0.3 0.15" radius="0.16" height="0.5" color="${colorShirt}" rotation="40 0 0" shadow="cast:true"></a-cylinder>
                         <a-entity position="-0.2 0.4 0.2" rotation="70 20 0">
                             <a-cylinder position="0 0.15 0" radius="0.035" height="0.3" color="${colorSkin}"></a-cylinder>
                             <a-entity position="0 0.3 0" rotation="20 0 0">

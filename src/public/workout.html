@@ -163,6 +163,56 @@
       transform: scaleX(-1); /* Mirror to match video */
     }
 
+    /* Positioning Guide Silhouette */
+    .position-guide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.35;
+      transition: opacity 0.5s ease;
+      z-index: 5;
+    }
+
+    .position-guide.hidden {
+      opacity: 0;
+    }
+
+    .silhouette-svg {
+      height: 90%;
+      fill: none;
+      stroke: #fff;
+      stroke-width: 2;
+      stroke-dasharray: 8 4;
+      transition: stroke 0.3s;
+    }
+
+    .position-guide.ready .silhouette-svg {
+      stroke: #02C39A;
+      stroke-dasharray: none;
+    }
+
+    .position-tip {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
     /* Skeleton confidence overlay */
     .confidence-badge {
       position: absolute;
@@ -450,10 +500,10 @@
 
       <!-- ══ Video Section ══ -->
       <div class="video-section">
-        <p class="video-section-title">
-          <span class="live-dot"></span>
-          Camera Feed + Pose Detection
-        </p>
+        <div class="video-section-title" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <div><span class="live-dot"></span> Camera Feed + Pose Detection</div>
+          <button onclick="testAudio()" class="btn btn-outline" style="padding:4px 10px; font-size:11px; height:auto; border-color:rgba(255,255,255,0.1); background:rgba(255,255,255,0.03);">🔈 Test Audio</button>
+        </div>
 
         <div class="camera-container" id="cameraContainer">
           <div class="camera-placeholder" id="cameraPlaceholder">
@@ -463,6 +513,14 @@
           <video id="webcam" autoplay playsinline></video>
           <canvas id="canvas"></canvas>
           <div class="confidence-badge" id="confidenceBadge">Detecting…</div>
+          
+          <!-- Positioning Guide Overlay -->
+          <div class="position-guide" id="guideOverlay">
+            <svg class="silhouette-svg" viewBox="0 0 100 200" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50,20 a10,10 0 1,1 0.1,0 Z M35,45 L65,45 L70,90 L60,95 L65,140 L55,145 L50,110 L45,145 L35,140 L40,95 L30,90 Z" />
+            </svg>
+            <div class="position-tip" id="guideTip">Align your body with the frame</div>
+          </div>
         </div>
 
         <div class="camera-status" id="cameraStatus">
@@ -560,6 +618,8 @@
 
     // Error throttle: avoid spamming the DB on every frame
     let lastLogTime    = {};
+    let lastSpeakTime  = 0;
+    const SPEAK_COOLDOWN = 6500; // Speak corrections every 6.5s max
 
     // ── DOM refs ─────────────────────────────────────────────────────────────
     const webcamEl    = document.getElementById('webcam');
@@ -579,6 +639,31 @@
     const video        = document.getElementById('webcam');
     const badge       = document.getElementById('confidenceBadge');
     const placeholder = document.getElementById('cameraPlaceholder');
+    const guideOverlay = document.getElementById('guideOverlay');
+    const guideTip     = document.getElementById('guideTip');
+
+    let currentPoseState = 'Detecting...';
+    let targetVoice = null;
+
+    function loadVoices() {
+      const voices = speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        console.warn('[AI Voice] No voices available yet. Retrying in 500ms...');
+        setTimeout(loadVoices, 500); // Retry until voices are available
+        return;
+      }
+      // Prioritize English voices (Google, then Microsoft, then any English)
+      targetVoice = voices.find(v => v.name.includes('Google US English')) ||
+                    voices.find(v => v.name.includes('Zira')) ||
+                    voices.find(v => v.lang.startsWith('en-')) ||
+                    voices[0]; // Fallback to first available
+      console.log('[AI Voice] Selected Voice:', targetVoice ? targetVoice.name : 'None');
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
+
 
     // ── MoveNet keypoint index map ─────────────────────────────────────────
     const KP = {
@@ -590,6 +675,39 @@
       leftKnee:13, rightKnee:14,
       leftAnkle:15, rightAnkle:16
     };
+
+    // ── Audio Feedback (Text-to-Speech) ──────────────────────────────────
+    const speechQueue = [];
+    let isSpeaking = false;
+
+    function speak(text) {
+      if (!window.speechSynthesis || !text) return;
+      
+      // Ensure voices are loaded if not already
+      if (!targetVoice) loadVoices();
+      
+      console.log(`[AI Voice] Triggering: "${text}"`);
+
+      // Cancel previous to prioritize the new one
+      speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (targetVoice) utterance.voice = targetVoice;
+      utterance.rate = 1.1;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      utterance.onstart = () => console.log('[AI Voice] 📢 Speech is now playing...');
+      utterance.onerror = (e) => console.error('[AI Voice Error]', e);
+      
+      speechSynthesis.speak(utterance);
+    }
+
+    function testAudio() {
+      const voiceName = targetVoice ? targetVoice.name : "System Default";
+      speak("Voice feedback is active using " + voiceName + ". Stand by for training instructions.");
+      alert("AI Voice Engine: " + voiceName + "\n\nIf you can hear the voice, audio is working perfectly!");
+    }
 
     const SKELETON_CONNECTIONS = [
       [KP.leftShoulder, KP.rightShoulder],
@@ -644,11 +762,14 @@
 
         detector = await poseDetection.createDetector(
           poseDetection.SupportedModels.MoveNet,
-          { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING }
+          { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
         );
 
         setStatus('<span class="status-ready">✓ AI Ready — click "Start Workout" to begin</span>', false);
         startBtn.disabled = false;
+        
+        // Start pre-session positioning guide
+        requestAnimationFrame(positioningLoop);
 
       } catch (err) {
         console.error('Model error:', err);
@@ -658,6 +779,25 @@
 
     function setStatus(html, showSpinner) {
       statusEl.innerHTML = (showSpinner ? '<span class="spinner"></span>' : '') + html;
+    }
+
+    function setFormStatus(status, headline, message) {
+      formEl.className = 'form-status ' + status;
+      headlineEl.textContent = headline;
+      msgEl.textContent = message;
+
+      // TTS Trigger
+      if (status === 'warning' || status === 'error') {
+        const timeSince = Date.now() - lastSpeakTime;
+        if (timeSince > SPEAK_COOLDOWN) {
+          console.log(`[AI Voice] Condition met for speaking. Status: ${status}`);
+          speak(message);
+          lastSpeakTime = Date.now();
+        } else {
+          // Log only occasionally to avoid spam
+          if (Math.random() < 0.05) console.log(`[AI Voice] Speech throttled. Cooldown: ${Math.round((SPEAK_COOLDOWN - timeSince)/1000)}s left`);
+        }
+      }
     }
 
     // ── Workout controls ──────────────────────────────────────────────────────
@@ -699,9 +839,16 @@
       finishBtn.disabled = false;
       badge.style.display = 'block';
 
+      // Reset speech timer so first correction is always immediate
+      lastSpeakTime = 0;
+
+      // Audio "Warm-up" - ensures voice engine is ready
+      speak("System ready."); 
+
       setStatus('<span class="status-ready">🔴 Detecting pose…</span>', false);
 
       durationTimer = setInterval(updateDuration, 1000);
+      guideOverlay.classList.add('hidden'); // Hide guide when workout starts
       detectLoop();
     }
 
@@ -764,16 +911,54 @@
           const avgConf = lastPose.keypoints
             .slice(5)  // skip face kps for body confidence
             .reduce((s, k) => s + (k.score || 0), 0) / 12;
-          badge.textContent = `Confidence: ${(avgConf * 100).toFixed(0)}%`;
+          
+          currentPoseState = getPostureState(lastPose.keypoints, machineId);
+          badge.textContent = `Confidence: ${(avgConf * 100).toFixed(0)}% | State: ${currentPoseState}`;
+
+          // Positioning Guide Logic
+          if (!isDetecting) {
+            const isCentered = kpVisible(kps[KP.leftShoulder]) && kpVisible(kps[KP.rightShoulder]);
+            if (isCentered) {
+              guideOverlay.classList.add('ready');
+              guideTip.textContent = 'Position Ready — Start Workout';
+            } else {
+              guideOverlay.classList.remove('ready');
+              guideTip.textContent = 'Align your body with the frame';
+            }
+          }
         } else {
           ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
           badge.textContent = 'No pose detected';
+          guideOverlay.classList.remove('ready');
         }
       } catch (err) {
         console.error('Detection frame error:', err);
       }
 
       rafId = requestAnimationFrame(detectLoop);
+    }
+
+    // ── Pre-start Positioning Loop ───────────────────────────────────────────
+    async function positioningLoop() {
+      if (isDetecting) return; // Stop this loop if workout started
+
+      try {
+        const poses = await detector.estimatePoses(webcamEl, { flipHorizontal: false });
+        if (poses.length > 0) {
+          const kps = poses[0].keypoints;
+          const isCentered = kpVisible(kps[KP.leftShoulder]) && kpVisible(kps[KP.rightShoulder]);
+          
+          if (isCentered) {
+            guideOverlay.classList.add('ready');
+            guideTip.textContent = 'Position Ready — Start Workout';
+          } else {
+            guideOverlay.classList.remove('ready');
+            guideTip.textContent = 'Align your body with the frame';
+          }
+        }
+      } catch (e) {}
+
+      if (!isDetecting) requestAnimationFrame(positioningLoop);
     }
 
     // ── Skeleton drawing ──────────────────────────────────────────────────────
@@ -824,19 +1009,82 @@
       return kp && (kp.score || 0) > threshold;
     }
 
+    // ── Posture State Detector (Machine Specialized) ────────────────────────
+    function getPostureState(kps, mId) {
+      const lHip = kps[KP.leftHip], rHip = kps[KP.rightHip];
+      const lKn  = kps[KP.leftKnee], rKn  = kps[KP.rightKnee];
+      const lAn  = kps[KP.leftAnkle], rAn  = kps[KP.rightAnkle];
+      const lSh  = kps[KP.leftShoulder], rSh = kps[KP.rightShoulder];
+
+      if (!kpVisible(lHip) || !kpVisible(lSh)) return 'Unknown';
+
+      // 1. Calculate Torso vs Leg verticality
+      const torsoHeight  = Math.abs(lSh.y - lHip.y);
+      const kneeVisible  = kpVisible(lKn);
+      const ankleVisible = kpVisible(lAn);
+      const thighHeight  = kneeVisible ? Math.abs(lHip.y - lKn.y) : -1;
+      const legHeight    = ankleVisible ? Math.abs(lHip.y - lAn.y) : -1;
+
+      // Verticality offset: Shoulder vs Hip (lower is more vertical)
+      const torsoOffset  = Math.abs((lSh.x + rSh.x)/2 - (lHip.x + rHip.x)/2);
+
+      // Handle Partial View (Lower body missing)
+      if (!kneeVisible && !ankleVisible) {
+        // If torso is vertical (offset < 40px), assume Standing
+        return (torsoOffset < 40) ? 'Standing (Partial View)' : 'Unknown';
+      }
+
+      // Treadmill specific standing check
+      if (mId === 'M001') {
+        const checkH = legHeight > 0 ? legHeight : (thighHeight * 2);
+        if (checkH > torsoHeight * 1.1) return 'Standing';
+        return 'Leaning/Crouching';
+      }
+
+      // Seated check (Leg Press: Horizontal legs)
+      if (mId === 'M002') {
+        const legHorizontal = thighHeight < torsoHeight * 0.4;
+        return legHorizontal ? 'Seated (Horizontal)' : 'Standing';
+      }
+
+      // General Seated Vertical (Bike / Chest / Lat)
+      if (['M003','M004','M005'].includes(mId)) {
+        if (legHeight > 0 && legHeight < torsoHeight * 1.35) return 'Seated';
+        return 'Standing';
+      }
+
+      return 'Standing';
+    }
+
     // ── Form analysis: dispatch by machine ───────────────────────────────────
     function analyzeForm(pose) {
       const kps = pose.keypoints;
 
+      // ── Pose State Guard (Machine-Specific) ──
+      const state = getPostureState(kps, machineId);
+      let stateError = null;
+      
+      // Only trigger errors if we are NOT in a Partial View (where confidence is low)
+      if (!state.includes('Partial View') && state !== 'Unknown') {
+        if (machineId === 'M001' && state !== 'Standing') {
+          stateError = { issueType: 'posture_state', severity: 'medium', correction: 'Please stand up safely on the treadmill.' };
+        }
+        if (['M002','M003','M004','M005'].includes(machineId) && state === 'Standing') {
+          stateError = { issueType: 'posture_state', severity: 'medium', correction: 'Please sit down to begin this exercise.' };
+        }
+      }
+
       // Run machine-specific checks; returns { issueType, severity, correction } or null
-      let result = null;
-      switch (machineId) {
-        case 'M001': result = checkTreadmill(kps);    break; // Running
-        case 'M002': result = checkLegPress(kps);     break; // Leg Press
-        case 'M003': result = checkChestPress(kps);   break; // Chest Press
-        case 'M004': result = checkLatPulldown(kps);  break; // Lat Pulldown
-        case 'M005': result = checkBike(kps);         break; // Stationary Bike
-        default:     result = checkGeneral(kps);      break;
+      let result = stateError; 
+      if (!result) {
+        switch (machineId) {
+          case 'M001': result = checkTreadmill(kps);    break; // Running
+          case 'M002': result = checkLegPress(kps);     break; // Leg Press
+          case 'M003': result = checkChestPress(kps);   break; // Chest Press
+          case 'M004': result = checkLatPulldown(kps);  break; // Lat Pulldown
+          case 'M005': result = checkBike(kps);         break; // Stationary Bike
+          default:     result = checkGeneral(kps);      break;
+        }
       }
 
       // ── Rep counting (wrist midpoint vertical cycle — works for all machines) ──
@@ -884,10 +1132,11 @@
 
       // 1. Excessive forward lean (horizontal shoulder-to-hip offset)
       if (kpVisible(lSh) && kpVisible(lHip)) {
-        const lean = lSh.x - lHip.x; // positive = shoulder ahead of hip
-        if (lean > 100) {
+        const lean = (lSh.x + kps[KP.rightShoulder].x)/2 - (lHip.x + kps[KP.rightHip].x)/2; 
+        console.log(`[AI Model] Treadmill Lean Detected: ${lean.toFixed(1)}px`);
+        if (Math.abs(lean) > 25) {
           return { issueType: 'incorrect_back_angle', severity: 'medium',
-            correction: 'Stand taller — you\'re leaning too far forward while running!' };
+            correction: 'Stand taller — you\'re leaning too far while running!' };
         }
       }
 

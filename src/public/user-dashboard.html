@@ -28,7 +28,7 @@
 
         .header {
             background: var(--color-surface);
-            padding: 20px 40px;
+            padding: 15px 20px;
             border-bottom: 1px solid var(--color-border);
             display: flex;
             justify-content: space-between;
@@ -36,6 +36,21 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        @media (max-width: 639px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .nav-links {
+                width: 100%;
+                justify-content: flex-start !important;
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
         }
 
         .user-info {
@@ -76,11 +91,24 @@
 
         .container {
             max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+            margin: 20px auto;
+            padding: 0 15px;
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 25px;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                margin: 40px auto;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .container {
+                grid-template-columns: repeat(3, 1fr);
+            }
         }
 
         .panel {
@@ -95,8 +123,13 @@
             transform: translateY(-5px);
         }
 
-        .span-2 { grid-column: span 2; }
-        .span-3 { grid-column: span 3; }
+        @media (min-width: 768px) {
+            .span-2-med { grid-column: span 2; }
+        }
+        @media (min-width: 1024px) {
+            .span-2 { grid-column: span 2; }
+            .span-3 { grid-column: span 3; }
+        }
 
         .stat-card {
             text-align: center;
@@ -223,10 +256,23 @@
 
         .back-link:hover { color: var(--color-accent); }
 
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            .span-2 { grid-column: span 1; }
-            .span-3 { grid-column: span 1; }
+        @media (max-width: 1023px) {
+            .container { 
+                grid-template-columns: 1fr; 
+                margin-top: 20px;
+            }
+            .span-2, .span-3, .span-2-med { 
+                grid-column: span 1 !important; 
+            }
+        }
+
+        @media (min-width: 640px) and (max-width: 1023px) {
+            .container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .span-2-med {
+                grid-column: span 2 !important;
+            }
         }
     </style>
 </head>
@@ -239,10 +285,15 @@
                 <span class="level-badge" id="userLevel">Beginner</span>
             </div>
         </div>
-        <div class="nav-links">
-            <a href="/" class="nav-link">Home</a>
-            <a href="/evaluation.html" class="nav-link" style="color: #6366f1; margin-left: 15px; margin-right: 15px;">💬 Give Feedback</a>
-            <a href="/scanner.html" class="nav-link">← Scanner</a>
+        <div class="nav-links" style="display:flex; align-items:center; gap:10px; flex-wrap: wrap;">
+            <a href="/" class="nav-link" style="text-decoration:none; color:var(--color-text-secondary); font-size:0.85rem; font-weight:600; padding:5px 10px;">Home</a>
+            <a href="/evaluation.html" class="nav-link" style="text-decoration:none; color: #6366f1; font-size:0.85rem; font-weight:600; padding:5px 10px;">Give Feedback</a>
+            <a href="/scanner.html" class="nav-link" style="text-decoration:none; color:var(--color-text-secondary); font-size:0.85rem; font-weight:600; padding:5px 10px;">Scanner</a>
+            <a href="/messages.html" id="msgNavBtn" style="position:relative; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#3b82f6; border-radius:10px; padding:8px 16px; cursor:pointer; font-weight:700; font-size:0.85rem; display:flex; align-items:center; gap:6px; text-decoration:none;">
+                Messages
+                <span id="unreadBadge" style="display:none; background:#ef4444; color:white; border-radius:50%; min-width:18px; height:18px; font-size:0.65rem; font-weight:800; align-items:center; justify-content:center;">0</span>
+            </a>
+            <button onclick="logout()" style="background:none; border:none; color:var(--color-text-secondary); cursor:pointer; font-weight:600; font-size:0.85rem; padding:5px 10px;">Logout</button>
         </div>
     </div>
 
@@ -262,10 +313,12 @@
         </div>
 
         <!-- Accuracy Trend -->
-        <div class="panel span-2">
+        <div class="panel span-2-med span-2">
             <div class="section-title">📈 Form Accuracy Trend</div>
-            <div class="chart-container" id="accuracyChart">
-                <!-- Bars will be inserted here -->
+            <div class="overflow-x-auto">
+                <div class="chart-container" id="accuracyChart" style="min-width: 400px;">
+                    <!-- Bars will be inserted here -->
+                </div>
             </div>
         </div>
 
@@ -280,19 +333,21 @@
         <!-- Workout History -->
         <div class="panel span-3">
             <div class="section-title">🕒 Recent Activity</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Machine</th>
-                        <th>Date</th>
-                        <th>Reps</th>
-                        <th>Accuracy</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTable">
-                    <!-- Rows will be inserted here -->
-                </tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Machine</th>
+                            <th>Date</th>
+                            <th>Reps</th>
+                            <th>Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable">
+                        <!-- Rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -402,7 +457,26 @@
             }).join('');
         }
 
-        window.onload = fetchUserData;
+        window.onload = function() {
+            fetchUserData();
+            loadUnreadBadge();
+        };
+
+        async function loadUnreadBadge() {
+            const sessionUser = JSON.parse(localStorage.getItem('user'));
+            if (!sessionUser) return;
+            try {
+                const res = await fetch('/api/messages/' + sessionUser.userId);
+                const json = await res.json();
+                const msgs = json.data || [];
+                const unread = msgs.filter(m => !m.read && m.fromRole !== 'member').length;
+                const badge = document.getElementById('unreadBadge');
+                if (unread > 0) {
+                    badge.textContent = unread;
+                    badge.style.display = 'flex';
+                }
+            } catch(e) {}
+        }
     </script>
 </body>
 </html>

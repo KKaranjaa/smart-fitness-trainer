@@ -12,7 +12,7 @@ const postureLogSchema = new mongoose.Schema({
   },
   errorType: {
     type: String,
-    enum: ['incorrect_back_angle', 'knee_overextension', 'elbow_position', 'hip_alignment', 'general_form', 'other'],
+    enum: ['incorrect_back_angle', 'knee_overextension', 'elbow_position', 'hip_alignment', 'posture_state', 'general_form', 'other'],
     required: true
   },
   severity: {

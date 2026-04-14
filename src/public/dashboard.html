@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/css/design-system.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     (function() {
       const user = JSON.parse(localStorage.getItem('user'));
@@ -41,11 +42,47 @@
       position: fixed;
       height: 100vh;
       z-index: 1000;
+      transition: transform 0.3s ease;
     }
     .main-content {
       margin-left: var(--sidebar-width);
       flex: 1;
       padding: 30px 40px;
+      min-width: 0; /* Prevents flex items from overflowing */
+    }
+
+    /* ── Responsive Overrides ── */
+    @media (max-width: 1023px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 20px;
+      }
+      .mobile-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        background: #1e293b;
+        padding: 15px 20px;
+        position: sticky;
+        top: 0;
+        z-index: 900;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+    }
+
+    .mobile-header { display: none; }
+    .menu-toggle {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
     }
 
     /* ── Sidebar Nav ── */
@@ -61,6 +98,22 @@
       background-clip: text;
       -webkit-text-fill-color: transparent;
       margin: 0;
+    }
+    .brand p {
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      margin-top: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .brand p {
+      font-size: 0.65rem;
+      color: var(--color-text-secondary);
+      margin-top: 5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     .brand span { font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
 
@@ -89,7 +142,12 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ── KPI Cards ── */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .kpi-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px; 
+      margin-bottom: 30px; 
+    }
     .kpi-card {
       background: #1e293b;
       border: 1px solid rgba(255,255,255,0.05);
@@ -103,8 +161,20 @@
 
     /* ── Tables ── */
     .panel { background: #1e293b; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05); }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; }
+    .panel-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      flex-wrap: wrap; 
+      gap: 15px; 
+    }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
     th { text-align: left; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     td { padding: 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
     tr:hover td { background: rgba(255,255,255,0.02); cursor: pointer; }
@@ -114,7 +184,7 @@
     .badge-inactive { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
     /* ── Chart Containers ── */
-    .chart-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
     canvas { width: 100% !important; height: 300px !important; }
 
     /* ── Search & Filter ── */
@@ -154,18 +224,26 @@
 </head>
 <body>
 
+  <div class="mobile-header">
+      <div class="brand" style="margin:0; padding:0;">
+          <h1 style="font-size: 1rem;">Trainer Suite</h1>
+      </div>
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+  </div>
+
   <div class="app-container">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="brand">
-        <h1>Trainer Suite</h1>
-        <span>BY EUGENE MOGARE</span>
+        <h1>SFT Trainer Hub</h1>
+        <p>University of Embu</p>
       </div>
       <ul class="nav-links">
         <li class="nav-item active" onclick="switchView('overview')">📊 Overview</li>
         <li class="nav-item" onclick="switchView('clients')">👥 My Clients</li>
         <li class="nav-item" onclick="switchView('activity')">🕒 Activity Log</li>
         <li class="nav-item" onclick="switchView('alerts')">⚠️ Inactivity Alerts</li>
+        <li class="nav-item" onclick="switchView('evaluations')">📋 Evaluations</li>
       </ul>
       <div style="margin-top: auto;">
         <div class="nav-item" onclick="logout()">🚪 Logout</div>
@@ -176,11 +254,14 @@
     <div class="main-content">
       
       <!-- HEADER -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-        <h2 id="viewTitle">Dashboard Overview</h2>
-        <div style="display: flex; gap: 15px;">
-           <button class="btn btn-outline" onclick="window.print()">Export PDF</button>
-           <button class="btn btn-primary" onclick="exportCSV()">Download CSV</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 20px;">
+        <div>
+          <h2 id="viewTitle" style="margin:0;">Research Overview</h2>
+          <p style="margin:5px 0 0 0; font-size:0.85rem; color:#94a3b8;">Author: Eugene Mogare | BSc. Computer Science</p>
+        </div>
+        <div style="display: flex; gap: 15px; width: 100%; justify-content: flex-end; flex-wrap: wrap;">
+           <button class="btn btn-outline" style="flex:1; min-width: 120px;" onclick="window.print()">Export (.PDF)</button>
+           <button class="btn btn-primary" style="flex:1; min-width: 120px;" onclick="exportCSV()">Export Study Data (.CSV)</button>
         </div>
       </div>
 
@@ -222,21 +303,23 @@
         <div class="panel">
           <div class="panel-header">
             <h3>Gym Members</h3>
-            <input type="text" class="search-box" placeholder="Search by name or goal..." oninput="filterClients(this.value)">
+            <input type="text" class="search-box" style="width: 100%; max-width: 300px;" placeholder="Search by name or goal..." oninput="filterClients(this.value)">
           </div>
-          <table id="clientTable">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Level</th>
-                <th>Status</th>
-                <th>Goal</th>
-                <th>Last Active</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="clientTableBody"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table id="clientTable">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Level</th>
+                  <th>Status</th>
+                  <th>Goal</th>
+                  <th>Last Active</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="clientTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -244,18 +327,20 @@
       <div id="activitySection" class="view-section">
         <div class="panel">
           <div class="panel-header"><h3>Global Exercise History</h3></div>
-          <table id="sessionTable">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Machine</th>
-                <th>Time</th>
-                <th>Reps</th>
-                <th>Accuracy</th>
-              </tr>
-            </thead>
-            <tbody id="sessionTableBody"></tbody>
-          </table>
+          <div class="table-responsive">
+            <table id="sessionTable">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Machine</th>
+                  <th>Time</th>
+                  <th>Reps</th>
+                  <th>Accuracy</th>
+                </tr>
+              </thead>
+              <tbody id="sessionTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -266,6 +351,18 @@
             <p style="color:#94a3b8; margin-bottom: 20px;">Clients with no activity in over 7 days.</p>
             <div id="alertList"></div>
          </div>
+      </div>
+
+      <!-- EVALUATIONS SECTION -->
+      <div id="evaluationsSection" class="view-section">
+        <div id="evalKpis" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:16px; margin-bottom:24px;"></div>
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Usability Survey Responses</h3>
+            <span id="evalCount" style="color:#94a3b8; font-size:0.85rem;"></span>
+          </div>
+          <div id="evalList"></div>
+        </div>
       </div>
 
     </div>
@@ -297,7 +394,43 @@
     </div>
   </div>
 
+  <!-- MODAL: Trainer Chat -->
+  <div class="modal-overlay" id="messageModal" onclick="if(event.target===this)closeChatModal()">
+    <div class="modal" style="max-width:560px; height:80vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+      <!-- Chat modal header -->
+      <div style="padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; gap:14px; flex-shrink:0;">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;" id="chatAvatarLetter">?</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;" id="chatRecipientName">Member</div>
+          <div style="font-size:0.75rem;color:#94a3b8;">Gym Member</div>
+        </div>
+        <span onclick="closeChatModal()" style="cursor:pointer;color:#94a3b8;font-size:1.4rem;line-height:1;padding:4px;">&#x2715;</span>
+      </div>
+      <input type="hidden" id="msgRecipientId">
+
+      <!-- Messages scroll -->
+      <div id="chatThreadScroll" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:6px;background:#0f1923;">
+        <div id="chatThreadEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#64748b;gap:10px;font-size:0.9rem;">
+          <span style="font-size:2.5rem;">&#x1F4AC;</span>
+          <span>No messages yet. Start the conversation.</span>
+        </div>
+      </div>
+
+      <!-- Input area -->
+      <div style="padding:14px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-end;gap:12px;flex-shrink:0;background:#1a2535;">
+        <textarea id="trainerMsgInput" placeholder="Type a message…" rows="1"
+          style="flex:1;background:#243044;border:1px solid rgba(255,255,255,0.07);border-radius:22px;padding:10px 16px;color:#f1f5f9;font-family:Inter,sans-serif;font-size:0.88rem;resize:none;min-height:42px;max-height:110px;outline:none;"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();trainerSendMsg();}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,110)+'px';"></textarea>
+        <button onclick="trainerSendMsg()" style="width:42px;height:42px;border-radius:50%;background:#02C39A;border:none;cursor:pointer;font-size:1rem;color:white;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">&#x27A4;</button>
+      </div>
+      <div id="chatSendStatus" style="padding:0 20px 10px;font-size:0.78rem;text-align:center;"></div>
+    </div>
+  </div>
+
   <script>
+    // ── Top-level declarations ─────────────────────────────────────────────
+    var socket; // declared here so all functions can reference it
     let clients = [];
     let selectedClientId = null;
 
@@ -314,6 +447,7 @@
         renderClients(clients);
         renderSessions(sessions.data);
         renderAlerts(clients);
+        fetchEvaluations();
       } catch (e) { console.error("Error loading data", e); }
     }
 
@@ -330,7 +464,6 @@
       document.getElementById('avgAccuracy').textContent = '94.2%';
       document.getElementById('weeklyWorkouts').textContent = sessions.length;
 
-      // Usage Chart
       new Chart(document.getElementById('usageChart'), {
         type: 'bar',
         data: {
@@ -344,12 +477,31 @@
         }
       });
 
-      // Error Chart
+      const errorLabels = {
+        'incorrect_back_angle': 'Lower Back Strain Risk',
+        'knee_overextension': 'ACL/Knee Injury Risk',
+        'elbow_position': 'Joint Stress Risk',
+        'speed_warning': 'Cardio Pacing Issue'
+      };
+
       new Chart(document.getElementById('errorChart'), {
         type: 'doughnut',
         data: {
-          labels: ['Back Angle', 'Knee Drift', 'Elbows', 'Hips'],
-          datasets: [{ data: [30, 20, 15, 10], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#02C39A'] }]
+          labels: ['Lower Back Risk', 'Knee Strain Risk', 'Joint Stress Risk', 'Other Form Risks'],
+          datasets: [{ 
+            data: [45, 25, 20, 10], 
+            backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#02C39A'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#94a3b8', font: { size: 10, family: 'Inter' }, padding: 15 }
+            }
+          },
+          cutout: '70%'
         }
       });
     }
@@ -363,7 +515,10 @@
           <td><span class="badge badge-${c.status}">${c.status}</span></td>
           <td>${c.fitnessGoals || 'General Fitness'}</td>
           <td>${c.lastWorkout ? new Date(c.lastWorkout).toLocaleDateString() : 'Never'}</td>
-          <td><button class="btn btn-outline" style="padding:4px 8px; font-size:10px">Profile</button></td>
+          <td style="display:flex; gap:6px;">
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:10px;" onclick="event.stopPropagation(); openClientModal('${c.userId}')">Profile</button>
+            <button class="btn btn-outline" style="padding:4px 8px; font-size:10px; border-color:#3b82f6; color:#3b82f6;" onclick="event.stopPropagation(); openMessageModal('${c.userId}','${c.name}')">Msg</button>
+          </td>
         </tr>
       `).join('');
     }
@@ -385,32 +540,28 @@
        document.getElementById('alertList').innerHTML = inactive.length ? inactive.map(c => `
           <div style="background:rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 15px; margin-bottom: 10px; border-radius: 8px; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <strong>${c.name}</strong> - Inactive for ${c.inactivityDays} days
+              <strong>${c.name}</strong> &mdash; Inactive for ${c.inactivityDays} days
               <br><small style="color:#94a3b8">Target Goal: ${c.fitnessGoals || 'None'}</small>
             </div>
-            <button class="btn btn-outline" style="border-color:#ef4444; color:#ef4444" onclick="openClientModal('${c.userId}')">Message</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-outline" style="padding:6px 12px;" onclick="openClientModal('${c.userId}')">Profile</button>
+              <button class="btn btn-outline" style="border-color:#3b82f6; color:#3b82f6; padding:6px 12px;" onclick="openMessageModal('${c.userId}','${c.name}')">Message</button>
+            </div>
           </div>
-       `).join('') : '<p>No critical inactivity alerts.</p>';
+       `).join('') : '<p style="color:#94a3b8;">No critical inactivity alerts. All members are active.</p>';
     }
 
     async function openClientModal(userId) {
       selectedClientId = userId;
       const client = clients.find(c => c.userId === userId);
       document.getElementById('modalName').textContent = client.name;
-      
-      // Update Detailed Profile Header
       document.getElementById('mLevel').textContent = client.fitnessLevel || 'Beginner';
       document.getElementById('mWeight').textContent = client.weight ? client.weight + 'kg' : '—';
       document.getElementById('mHeight').textContent = client.height ? client.height + 'cm' : '—';
       document.getElementById('mGoal').textContent = client.fitnessGoals || 'Fitness';
-
       document.getElementById('clientModal').style.display = 'flex';
-      
-      // Load Notes
       renderNotes(client.notes);
-
-      // Trend Chart
-      const history = await fetch(`/api/clients/${userId}/workouts`).then(r => r.json());
+      const history = await fetch('/api/clients/' + userId + '/workouts').then(r => r.json());
       new Chart(document.getElementById('clientTrendChart'), {
         type: 'line',
         data: {
@@ -432,24 +583,260 @@
     async function saveNote() {
        const content = document.getElementById('noteInput').value;
        if(!content) return;
-       const res = await fetch(`/api/clients/${selectedClientId}/notes`, {
+       const res = await fetch('/api/clients/' + selectedClientId + '/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content })
        }).then(r => r.json());
-       
        if(res.status === 'success') {
           document.getElementById('noteInput').value = '';
           renderNotes(res.data);
-          // Update local clients data
           const idx = clients.findIndex(c => c.userId === selectedClientId);
           clients[idx].notes = res.data;
        }
     }
 
     function closeModal() { document.getElementById('clientModal').style.display = 'none'; }
+
+    // ── Chat Modal ────────────────────────────────────────────────────────────
+    let chatPollTimer = null;
+    let currentChatUser = null;
+
+    async function openMessageModal(userId, name) {
+      document.getElementById('msgRecipientId').value = userId;
+      document.getElementById('chatRecipientName').textContent = name;
+      document.getElementById('chatAvatarLetter').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('trainerMsgInput').value = '';
+      document.getElementById('chatSendStatus').textContent = '';
+      document.getElementById('messageModal').style.display = 'flex';
+      currentChatUser = userId;
+
+      await loadChatThread(userId);
+      // Mark member replies as read via socket
+      if (socket) socket.emit('mark_read', { readerRole: 'trainer', toUserId: userId });
+
+      // Poll every 3s while modal is open — guaranteed fallback
+      clearInterval(chatPollTimer);
+      chatPollTimer = setInterval(() => loadChatThread(userId), 3000);
+      document.getElementById('trainerMsgInput').focus();
+    }
+
+    function closeChatModal() {
+      document.getElementById('messageModal').style.display = 'none';
+      clearInterval(chatPollTimer);
+      currentChatUser = null;
+    }
+
+    // Aliases kept for compat
+    function closeMessageModal() { closeChatModal(); }
+
+    async function loadChatThread(userId) {
+      try {
+        const r   = await fetch('/api/messages/' + userId, { cache: 'no-store' });
+        const d   = await r.json();
+        const msgs = d.data || [];
+        renderChatThread(msgs, userId);
+      } catch(e) { console.error('Chat fetch error', e); }
+    }
+
+    function renderChatThread(msgs, memberUserId) {
+      const scroll = document.getElementById('chatThreadScroll');
+      const empty  = document.getElementById('chatThreadEmpty');
+      const wasAtBottom = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 60;
+
+      if (!msgs.length) { if (empty) empty.style.display = 'flex'; return; }
+      if (empty) empty.style.display = 'none';
+
+      const memberFirst = (document.getElementById('chatRecipientName').textContent || '').charAt(0).toUpperCase();
+
+      let html = '';
+      let lastDate = '';
+      msgs.forEach(m => {
+        const d = new Date(m.sentAt);
+        const today = new Date();
+        const yest  = new Date(today); yest.setDate(today.getDate() - 1);
+        let dateLabel;
+        if (d.toDateString() === today.toDateString()) dateLabel = 'Today';
+        else if (d.toDateString() === yest.toDateString()) dateLabel = 'Yesterday';
+        else dateLabel = d.toLocaleDateString([], { weekday:'short', month:'short', day:'numeric' });
+
+        if (dateLabel !== lastDate) {
+          html += '<div style="text-align:center;margin:10px 0 4px;"><span style="background:#1e293b;color:#64748b;font-size:0.68rem;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:0.05em;text-transform:uppercase;">' + dateLabel + '</span></div>';
+          lastDate = dateLabel;
+        }
+
+        const fromTrainer = m.fromRole === 'trainer';
+        const timeStr = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        const initials = fromTrainer ? 'EM' : memberFirst;
+        const avatarBg = fromTrainer ? 'linear-gradient(135deg,#02C39A,#028090)' : 'linear-gradient(135deg,#3b82f6,#6366f1)';
+        const bubbleBg = fromTrainer ? '#1e3a5f' : '#164033';
+        const textCol  = fromTrainer ? '#cbd5e1' : '#d1fae5';
+        const align    = fromTrainer ? 'flex-start' : 'flex-end';
+        const radius   = fromTrainer ? '18px 18px 18px 4px' : '18px 18px 4px 18px';
+        const flexDir  = fromTrainer ? 'row' : 'row-reverse';
+        const body     = m.body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+
+        html += '<div style="display:flex;align-items:flex-end;gap:8px;max-width:80%;align-self:' + align + ';flex-direction:' + flexDir + ';">'
+          + '<div style="width:28px;height:28px;border-radius:50%;background:' + avatarBg + ';display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:800;color:white;flex-shrink:0;">' + initials + '</div>'
+          + '<div>'
+          + '<div style="background:' + bubbleBg + ';color:' + textCol + ';padding:9px 13px;border-radius:' + radius + ';font-size:0.87rem;line-height:1.5;word-break:break-word;">' + body + '</div>'
+          + '<div style="font-size:0.63rem;color:#475569;margin-top:3px;text-align:' + (fromTrainer ? 'left' : 'right') + ';">' + timeStr + '</div>'
+          + '</div></div>';
+      });
+      scroll.innerHTML = html;
+      if (wasAtBottom) scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    function trainerSendMsg() {
+      const toUserId = document.getElementById('msgRecipientId').value;
+      const input    = document.getElementById('trainerMsgInput');
+      const body     = input.value.trim();
+      if (!body || !toUserId) return;
+
+      input.value = '';
+      input.style.height = 'auto';
+
+      // Optimistic render
+      const optimistic = {
+        _id: 'tmp-' + Date.now(), fromRole: 'trainer',
+        from: 'Eugene Mogare', toUserId,
+        body, sentAt: new Date().toISOString()
+      };
+      const current = Array.from(document.querySelectorAll('#chatThreadScroll [data-mid]'))
+        .map(el => JSON.parse(el.dataset.mid)); // not used — we re-render from socket
+
+      // Send via socket — server saves to DB and broadcasts to both sides
+      socket.emit('send_message', { fromUserId: toUserId, fromRole: 'trainer', body });
+
+      // Immediately reload the thread to show the sent message
+      setTimeout(() => loadChatThread(toUserId), 150);
+    }
+
+    // ── Evaluations ──────────────────────────────────────────────────────────
+    async function fetchEvaluations() {
+      try {
+        const res = await fetch('/api/evaluation/all');
+        const json = await res.json();
+        const data = json.data || [];
+        if (!data.length) {
+          document.getElementById('evalList').innerHTML = '<p style="color:#94a3b8; padding:20px 0;">No evaluations submitted yet.</p>';
+          document.getElementById('evalCount').textContent = '0 responses';
+          return;
+        }
+        document.getElementById('evalCount').textContent = data.length + ' response' + (data.length !== 1 ? 's' : '');
+
+        // Proposal Analysis Keys (Mapping Q5-Q13)
+        const keys = [
+          'easeOfUnderstanding', 'qrConvenience', 'interfaceStraightforward',
+          'accuracyDetection', 'feedbackImprovement', 'feedbackInterpretation',
+          'responsiveness', 'regularUse', 'increasedConfidence'
+        ];
+        const labels = [
+          'AR Understanding', 'QR Convenience', 'Interface',
+          'Pose Accuracy', 'Form Improvement', 'Intrepretation',
+          'System Speed', 'Future Use', 'Confidence'
+        ];
+        const colors = ['#02C39A','#3b82f6','#028090','#f59e0b','#ef4444','#8b5cf6','#6366f1','#ec4899','#f97316'];
+        const avgs   = keys.map(k => {
+          const vals = data.map(e => e.responses && e.responses[k]).filter(v => v !== null && v !== undefined);
+          return vals.length ? (vals.reduce((a,b) => a+b,0) / vals.length).toFixed(1) : '—';
+        });
+
+        document.getElementById('evalKpis').innerHTML = keys.map((k,i) =>
+          '<div style="background:#1e293b; border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.05); text-align:center;">' +
+          '<div style="color:#94a3b8; font-size:0.7rem; text-transform:uppercase; font-weight:700; margin-bottom:8px;">' + labels[i] + '</div>' +
+          '<div style="font-size:2rem; font-weight:800; color:' + colors[i] + '">' + avgs[i] + '</div>' +
+          '<div style="color:#94a3b8; font-size:0.7rem;">/ 5</div>' +
+          '</div>'
+        ).join('');
+
+        document.getElementById('evalList').innerHTML = data.map(e => {
+          const scores = e.responses ? keys.map((k,i) =>
+            '<span style="background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:8px; font-size:0.75rem; margin-right:4px;">' +
+            labels[i] + ': <b>' + (e.responses[k] || '—') + '</b></span>'
+          ).join('') : '';
+          const anonBadge = e.isAnonymous
+            ? '<span style="background:rgba(148,163,184,0.1); color:#94a3b8; padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:700;">Anonymous</span>'
+            : '<span style="font-weight:700;">' + e.submittedBy + '</span>';
+          return '<div style="border-bottom:1px solid rgba(255,255,255,0.05); padding:16px 0;">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+            anonBadge +
+            '<small style="color:#94a3b8;">' + new Date(e.timestamp).toLocaleString() + '</small>' +
+            '</div>' +
+            (e.comments && e.comments.likedMost ? '<p style="color:#02C39A; font-size:0.8rem; margin:8px 0 0;"><b>Liked Most:</b> ' + e.comments.likedMost + '</p>' : '') +
+            (e.comments && e.comments.improvements ? '<p style="color:#f59e0b; font-size:0.8rem; margin:4px 0 0;"><b>Improvements:</b> ' + e.comments.improvements + '</p>' : '') +
+            '</div>';
+        }).join('');
+      } catch(err) { console.error('Error loading evaluations', err); }
+    }
+
+    function filterClients(q) {
+      const filtered = clients.filter(c =>
+        c.name.toLowerCase().includes(q.toLowerCase()) ||
+        (c.fitnessGoals || '').toLowerCase().includes(q.toLowerCase())
+      );
+      renderClients(filtered);
+    }
     function exportCSV() { window.location.href = '/api/analytics/export'; }
-    window.onload = fetchData;
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    // ── Init ───────────────────────────────────────────────────────────────
+    window.onload = function() {
+      fetchData();
+
+      // Close sidebar when clicking menu items on mobile
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          if (window.innerWidth < 1024) {
+            document.getElementById('sidebar').classList.remove('open');
+          }
+        });
+      });
+
+      // ── Socket.io real-time messaging ────────────────────────────────
+      socket = io();
+      console.log('[Socket] Dashboard connecting...');
+
+      socket.on('connect', () => {
+        console.log('[Socket] Trainer connected:', socket.id);
+        socket.emit('join', { userId: 'TRAINER' });
+      });
+
+      // New message arrives in real-time
+      socket.on('new_message', (msg) => {
+        if (msg.fromRole === 'member') {
+          if (currentChatUser === msg.toUserId) {
+            // Chat modal is open for this member — refresh the thread immediately
+            loadChatThread(msg.toUserId);
+            socket.emit('mark_read', { readerRole: 'trainer', toUserId: msg.toUserId });
+          } else {
+            // Chat modal is not open — flash unread badge and page title
+            const badge = document.querySelector('[data-unread="' + msg.toUserId + '"]');
+            if (badge) { badge.textContent = (parseInt(badge.textContent) || 0) + 1; badge.style.display = 'inline-block'; }
+            document.title = '💬 New Message! - Trainer Suite';
+            setTimeout(() => { document.title = 'Elite Trainer Suite - Eugene Mogare'; }, 4000);
+          }
+        } else if (msg.fromRole === 'trainer' && currentChatUser === msg.toUserId) {
+          // Trainer's own sent message — reload to confirm it saved
+          loadChatThread(msg.toUserId);
+        }
+      });
+
+      socket.on('user_typing', ({ fromRole, toUserId }) => {
+        if (fromRole === 'member' && currentChatUser === toUserId) {
+          document.getElementById('chatSendStatus').textContent = '✏️ Member is typing...';
+          document.getElementById('chatSendStatus').style.color = '#94a3b8';
+        }
+      });
+      socket.on('user_stop_typing', ({ fromRole, toUserId }) => {
+        if (fromRole === 'member' && currentChatUser === toUserId) {
+          document.getElementById('chatSendStatus').textContent = '';
+        }
+      });
+    };
   </script>
 </body>
 </html>
